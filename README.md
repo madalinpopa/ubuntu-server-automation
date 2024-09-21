@@ -1,5 +1,7 @@
 # OmniOpenCon 2024
 
+OmniOpenCon is a gathering of people, projects and communities involved in all things open: open source, open data, open science, open hardware, open education. We value openness, freedom and sharing and we want to bring together all who share these beliefs.
+
 ## Workshop: From Zero to DevOps Cloud: Ansible-Driven VPS Setup for Development
 
 ## Table of Contents
