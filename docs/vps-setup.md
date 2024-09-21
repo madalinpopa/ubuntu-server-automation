@@ -5,6 +5,8 @@ In this guide, we will walk you through the process of setting up a Virtual Priv
 ### Table of Contents
 * [Picking a VPS Provider](#picking-a-vps-provider)
 * [VPS Disk Encryption](#vps-disk-encryption)
+* [Global VPS Providers](#global-vps-providers)
+* [Official Linux Distribution Websites](#official-linux-distribution-websites)
 
 ## Picking a VPS Provider
 
@@ -50,3 +52,13 @@ Here are some popular VPS providers that offer a wide range of services and feat
 
 5. **hostinger**: hostinger provides affordable VPS hosting with dedicated resources and a user-friendly control panel.
 
+
+## Official Linux Distribution Websites
+
+If you prefer to install a specific Linux distribution on your VPS, you can download the ISO image from the official distribution website. Here are some popular Linux distributions:
+
+1. **Ubuntu**: [Download Ubuntu ISO](https://releases.ubuntu.com/)
+
+2. **Debian**: [Download Debian ISO](https://www.debian.org/distrib/)
+
+3. **CentOS**: [Download CentOS ISO](https://www.centos.org/download/)
