@@ -20,6 +20,8 @@ In this section, we will cover some basic Linux commands that you will need to f
 
 2. **`cd`**: Change directory.
    ```bash
+   cd directory_name
+   ```
 
 3. **`pwd`**: Print the current working directory.
    ```bash
