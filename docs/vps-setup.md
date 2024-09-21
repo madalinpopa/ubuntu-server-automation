@@ -10,17 +10,17 @@ In this guide, we will walk you through the process of setting up a Virtual Priv
 
 Before you begin, you need to select a VPS provider that meets the following criteria:
 
-1. 	Ability to mount installation ISOs: This allows you to load custom operating systems or recovery tools.
+1. Ability to mount installation ISOs: This allows you to load custom operating systems or recovery tools.
 
 2. Console access outside of SSH (VNC or serial): In case of network issues or SSH misconfigurations, console access lets you troubleshoot your VPS directly.
 
 3. Support for full disk encryption on virtual disks: Ensures that your data is encrypted at rest.
 
-4.  Reasonable pricing: Choose a provider that fits your budget and offers the features you need.
+4. Reasonable pricing: Choose a provider that fits your budget and offers the features you need.
 
-5.  Good network connectivity: Ensure that the provider has good network connectivity and low latency to your location.
+5. Good network connectivity: Ensure that the provider has good network connectivity and low latency to your location.
 
-6.  Data center locations: Choose a provider with data centers in regions that are close to your target audience or have good connectivity to your location.
+6. Data center locations: Choose a provider with data centers in regions that are close to your target audience or have good connectivity to your location.
 
 
 ## VPS Disk Encryption
