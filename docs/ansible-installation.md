@@ -20,21 +20,21 @@ There are multiple ways to install Ansible, depending on your operating system. 
 
 1. Before installing Ansible, it's a good practice to update the package repository to ensure you have the latest version of the software available. Run the following command to update the package repository:
 
-```bash
-sudo apt update
-```
+    ```bash
+    sudo apt update
+    ```
 
 2. Once the package repository is updated, you can proceed to install Ansible. Run the following command to install Ansible on your local machine:
 
-```bash
-sudo apt install ansible
-```
+    ```bash
+    sudo apt install ansible
+    ```
 
 3. To verify that Ansible has been successfully installed, you can check the version of Ansible by running the following command:
 
-```bash
-ansible --version
-```
+    ```bash
+    ansible --version
+    ```
 
 ## Install Ansible Using `pipx`
 
@@ -42,22 +42,22 @@ ansible --version
 
 1. Install `pipx` if you don't already have it installed:
 
-```bash
-python3 -m pip install --user pipx
-python3 -m pipx ensurepath
-```
+    ```bash
+    python3 -m pip install --user pipx
+    python3 -m pipx ensurepath
+    ```
 
 2. Use `pipx` to install Ansible:
 
-```bash
-pipx install ansible
-```
+    ```bash
+    pipx install ansible
+    ```
 
 3. Verify the installation by running:
 
-```bash
-ansible --version
-```
+    ```bash
+    ansible --version
+    ```
 
 If the installation was successful, you should see the version of Ansible installed on your machine.
 
@@ -69,35 +69,35 @@ To install Ansible on MacOS, you can use `pip` or `Homebrew`. Here are the steps
 
 1. Install Ansible using `pip`:
 
-```bash
-pip install ansible
-```
+    ```bash
+    pip install ansible
+    ```
 
 2. Verify the installation by running:
 
-```bash
-ansible --version
-```
+    ```bash
+    ansible --version
+    ```
 
 Alternatively, you can use `Homebrew` to install Ansible on MacOS:
 
 1. Install Homebrew if you don't already have it installed:
 
-```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
+    ```bash
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    ```
 
 2. Use Homebrew to install Ansible:
 
-```bash
-brew install ansible
-```
+    ```bash
+    brew install ansible
+    ```
 
 3. Verify the installation by running:
 
-```bash
-ansible --version
-```
+    ```bash
+    ansible --version
+    ```
 
 
 ## Install Ansible on Windows
@@ -108,7 +108,7 @@ To install Ansible on Windows, you can use the Windows Subsystem for Linux (WSL)
 2. Once WSL is installed, you can follow the steps outlined in the "Installing Ansible on Ubuntu" section above to install Ansible on your WSL instance.
 3. Verify the installation by running:
 
-```bash
-ansible --version
-```
+    ```bash
+    ansible --version
+    ```
 
