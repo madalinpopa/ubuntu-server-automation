@@ -6,9 +6,17 @@ In this guide, we will walk you through the steps to install Ansible on your loc
 
 More information about Ansible can be found on the official [Ansible website](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html
 
+## Table of Contents
+
+* [Installing Ansible on Ubuntu](#installing-ansible-on-ubuntu)
+* [Install Ansible Using `pipx`](#install-ansible-using-pipx)
+* [Install Ansible on MacOS](#install-ansible-on-macos)
+* [Install Ansible on Windows](#install-ansible-on-windows)
+
+
 There are multiple ways to install Ansible, depending on your operating system. In this guide, we will focus on installing Ansible on Ubuntu, one of the most popular Linux distributions.
 
-### Installing Ansible on Ubuntu
+## Installing Ansible on Ubuntu
 
 1. Before installing Ansible, it's a good practice to update the package repository to ensure you have the latest version of the software available. Run the following command to update the package repository:
 
@@ -28,7 +36,7 @@ sudo apt install ansible
 ansible --version
 ```
 
-### Install Ansible Using `pipx`
+## Install Ansible Using `pipx`
 
 `pipx` is a tool that allows you to install and run Python applications in isolated environments. To install Ansible using `pipx`, follow these steps:
 
@@ -55,7 +63,7 @@ If the installation was successful, you should see the version of Ansible instal
 
 Congratulations! You have successfully installed Ansible on your local machine. You are now ready to start automating your infrastructure setup using Ansible playbooks.
 
-### Install Ansible on MacOS
+## Install Ansible on MacOS
 
 To install Ansible on MacOS, you can use `pip` or `Homebrew`. Here are the steps to install Ansible using `pip`:
 
@@ -92,7 +100,7 @@ ansible --version
 ```
 
 
-### Install Ansible on Windows
+## Install Ansible on Windows
 
 To install Ansible on Windows, you can use the Windows Subsystem for Linux (WSL) or a virtual machine running a Linux distribution. Here are the steps to install Ansible using WSL:
 
