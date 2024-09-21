@@ -62,3 +62,8 @@ If you prefer to install a specific Linux distribution on your VPS, you can down
 2. **Debian**: [Download Debian ISO](https://www.debian.org/distrib/)
 
 3. **CentOS**: [Download CentOS ISO](https://www.centos.org/download/)
+
+For this workshop, we recommend using the Ubuntu 24.04 LTS (Long Term Support) release. You can download the ISO image from the following link:
+
+https://releases.ubuntu.com/24.04/ubuntu-24.04.1-live-server-amd64.iso
+
