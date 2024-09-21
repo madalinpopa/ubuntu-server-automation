@@ -3,10 +3,10 @@
 In this guide, we will walk you through the process of setting up a Virtual Private Server (VPS) for the workshop. If you already have a VPS, you can skip this section and proceed to the [Ansible Installation Guide](./ansible-installation.md).
 
 ### Table of Contents
-* [Pickin a VPS Provider](#pickin-a-vps-provider)
+* [Picking a VPS Provider](#picking-a-vps-provider)
 * [VPS Disk Encryption](#vps-disk-encryption)
 
-## Pickin a VPS Provider
+## Picking a VPS Provider
 
 Before you begin, you need to select a VPS provider that meets the following criteria:
 
