@@ -4,7 +4,7 @@ Ansible is an open-source automation tool that simplifies the process of managin
 
 In this guide, we will walk you through the steps to install Ansible on your local machine. Once installed, you can use Ansible to automate the setup of your VPS and streamline your development workflow.
 
-More information about Ansible can be found on the official [Ansible website](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html
+More information about Ansible can be found on the official [Ansible website](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html).
 
 ## Table of Contents
 
