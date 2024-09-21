@@ -2,7 +2,7 @@
 
 ## Workshop: From Zero to DevOps Cloud: Ansible-Driven VPS Setup for Development
 
-### Table of Contents
+## Table of Contents
 
    * [Abstract](#abstract)
    * [Prerequisites](#prerequisites)
@@ -11,7 +11,7 @@
    * [Resources](#resources)
    * [Feedback](#feedback)
 
-### Abstract
+## Abstract
 
 Welcome to OmniOpenCon 2024 and this workshop titled “From Zero to DevOps Cloud: Ansible-Driven VPS Setup for Development.”
 
@@ -26,7 +26,7 @@ In this hands-on session, you will learn how to automate the process of setting 
 
 This workshop is designed to minimize manual setup and centralize configuration management within Ansible, allowing you to create reproducible, scalable infrastructure deployments. Let’s dive into automation and simplify your DevOps workflow!
 
-### Prerequisites
+## Prerequisites
 
 Before diving into the automation process, make sure you have the following:
 
@@ -39,19 +39,19 @@ Before diving into the automation process, make sure you have the following:
   * Basic knowledge of Linux commands and system administration.
   * A text editor like VS Code or Vim.
 
-#### VPS Setup
+### VPS Setup
 
 If you don’t have a VPS yet, you can follow our [VPS Setup Guide](vps-setup.md) to create one.
 
-#### Ansible Installation
+### Ansible Installation
 
 If you don’t have Ansible installed on your local machine, you can follow our [Ansible Installation Guide](ansible-installation.md).
 
-#### Generate SSH Key Pair
+### Generate SSH Key Pair
 
 If you don’t have an SSH key pair, you can follow our [SSH Key Pair Generation Guide](ssh-keypair.md) to create one.
 
-#### Basic Linux Commands
+### Basic Linux Commands
 
 If you are new to Linux commands, you can refer to our [Basic Linux Commands Guide](linux-commands.md) for a quick overview.
 
