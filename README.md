@@ -2,8 +2,7 @@
 
 ## Workshop: From Zero to DevOps Cloud: Ansible-Driven VPS Setup for Development
 
-Table of Contents
-=================
+### Table of Contents
 
    * [Abstract](#abstract)
    * [Prerequisites](#prerequisites)
