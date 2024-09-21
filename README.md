@@ -38,3 +38,20 @@ Before diving into the automation process, make sure you have the following:
   * SSH key pair for secure access to your VPS.
   * Basic knowledge of Linux commands and system administration.
   * A text editor like VS Code or Vim.
+
+#### VPS Setup
+
+If you don’t have a VPS yet, you can follow our [VPS Setup Guide](vps-setup.md) to create one.
+
+#### Ansible Installation
+
+If you don’t have Ansible installed on your local machine, you can follow our [Ansible Installation Guide](ansible-installation.md).
+
+#### Generate SSH Key Pair
+
+If you don’t have an SSH key pair, you can follow our [SSH Key Pair Generation Guide](ssh-keypair.md) to create one.
+
+#### Basic Linux Commands
+
+If you are new to Linux commands, you can refer to our [Basic Linux Commands Guide](linux-commands.md) for a quick overview.
+
