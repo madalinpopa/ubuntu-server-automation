@@ -23,7 +23,7 @@ To generate an SSH key pair, follow these steps:
 2. Run the following command to generate a new SSH key pair. You can specify an email address as a label for the key:
 
    ```bash
-   ssh-keygen -t rsa -b 4096 -C "
+    ssh-keygen -t ed25519 -C "your_email@example.com"
     ```
 
 3. You will be prompted to choose a location to save the key pair. Press `Enter` to save the key pair in the default location (`~/.ssh/id_rsa`).
@@ -67,8 +67,13 @@ To copy the public key to your VPS, follow these steps:
    ```bash
    chmod 700 ~/.ssh
    chmod 600 ~/.ssh/authorized_keys
-   ```
+    ```
 
+Also, you can use `ssh-copy-id` to copy the public key to your VPS. Run the following command:
+
+```bash
+ssh-copy-id -i ~/.ssh/id_rsa.pub <username>@<vps_ip>
+```
 
 ## Testing the SSH Connection
 
@@ -80,7 +85,6 @@ ssh -i ~/.ssh/id_rsa <username>@<vps_ip>
 ```
 
 Replace `<username>` with your username on the VPS and `<vps_ip>` with the IP address of your VPS.
-
 
 ## Conclusion
 
