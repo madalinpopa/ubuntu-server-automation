@@ -45,7 +45,7 @@ If you don’t have a VPS yet, you can follow our [VPS Setup Guide](vps-setup.md
 
 ### Ansible Installation
 
-If you don’t have Ansible installed on your local machine, you can follow our [Ansible Installation Guide](ansible-installation.md).
+If you don’t have Ansible installed on your local machine, you can follow our [Ansible Installation Guide](./docs/ansible-installation.md).
 
 ### Generate SSH Key Pair
 
