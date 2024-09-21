@@ -7,6 +7,7 @@ In this guide, we will walk you through the process of setting up a Virtual Priv
 * [VPS Disk Encryption](#vps-disk-encryption)
 * [Global VPS Providers](#global-vps-providers)
 * [Official Linux Distribution Websites](#official-linux-distribution-websites)
+* [Install Ubuntu 24.04 LTS on Chroot.ro](#install-ubuntu-24.04-lts-on-chroot.ro)
 
 ## Picking a VPS Provider
 
@@ -66,4 +67,23 @@ If you prefer to install a specific Linux distribution on your VPS, you can down
 For this workshop, we recommend using the Ubuntu 24.04 LTS (Long Term Support) release. You can download the ISO image from the following link:
 
 https://releases.ubuntu.com/24.04/ubuntu-24.04.1-live-server-amd64.iso
+
+## Install Ubuntu 24.04 LTS on Chroot.ro
+
+In this section, we will guide you through the process of installing Ubuntu 24.04 LTS on a VPS provided by chroot.ro. If you are using a different VPS provider, the process for creating a VPS instance may vary.
+
+Once the VPS is created, you will need to mount the Ubuntu 24.04 LTS ISO image to the VPS and boot from it to start the installation process.
+
+1. **Boot to Ubuntu 24.04 LTS ISO**: Log in to your chroot.ro account and navigate to the VPS management panel. Find the option to mount an ISO image and select the Ubuntu 24.04 LTS ISO file.
+
+2. **Start the VPS**: Once the ISO image is mounted, start the VPS and access the console. You should see the Ubuntu installer booting up.
+
+3. **Follow the Installation Steps**: Proceed with the installation steps as guided by the Ubuntu installer. You will need to select the language, keyboard layout, timezone, and disk partitioning options.
+
+4. **Set Up User Account**: Create a user account with sudo privileges and set a strong password. This account will be used to log in to the VPS.
+
+5. **Complete the Installation**: Once the installation is complete, reboot the VPS and log in using the user account you created.
+
+Congratulations! You have successfully installed Ubuntu 24.04 LTS on your VPS. You can now proceed to the [Ansible Installation Guide](./ansible-installation.md) to set up Ansible on your local machine.
+
 
