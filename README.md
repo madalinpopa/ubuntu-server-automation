@@ -25,3 +25,16 @@ In this hands-on session, you will learn how to automate the process of setting 
 - Set up secure access to your VPS and services using a VPN.
 
 This workshop is designed to minimize manual setup and centralize configuration management within Ansible, allowing you to create reproducible, scalable infrastructure deployments. Let’s dive into automation and simplify your DevOps workflow!
+
+### Prerequisites
+
+Before diving into the automation process, make sure you have the following:
+
+* A VPS (Virtual Private Server) with root access. 
+  * You can use any cloud provider like AWS, DigitalOcean, Linode, or a local VPS provider.
+  * SSH access to your VPS.
+* Local Environment Setup:
+  * Ansible installed on your local machine.
+  * SSH key pair for secure access to your VPS.
+  * Basic knowledge of Linux commands and system administration.
+  * A text editor like VS Code or Vim.
