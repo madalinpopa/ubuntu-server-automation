@@ -92,3 +92,15 @@ ansible --version
 ```
 
 
+### Install Ansible on Windows
+
+To install Ansible on Windows, you can use the Windows Subsystem for Linux (WSL) or a virtual machine running a Linux distribution. Here are the steps to install Ansible using WSL:
+
+1. Install WSL on your Windows machine by following the instructions in the [WSL documentation](https://docs.microsoft.com/en-us/windows/wsl/install).
+2. Once WSL is installed, you can follow the steps outlined in the "Installing Ansible on Ubuntu" section above to install Ansible on your WSL instance.
+3. Verify the installation by running:
+
+```bash
+ansible --version
+```
+
