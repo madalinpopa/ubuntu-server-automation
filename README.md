@@ -53,5 +53,5 @@ If you don’t have an SSH key pair, you can follow our [SSH Key Pair Generation
 
 ### Basic Linux Commands
 
-If you are new to Linux commands, you can refer to our [Basic Linux Commands Guide](./docs/linux-commands.md) for a quick overview.
+If you are new to Linux commands, you can refer to our [Basic Linux Commands Guide](./docs/linux-basic.md) for a quick overview.
 
