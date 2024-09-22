@@ -11,8 +11,12 @@ OmniOpenCon is a gathering of people, projects and communities involved in all t
         * [VPS Setup](#vps-setup)
         * [Ansible Installation](#ansible-installation)
         * [Basic Linux Commands](#basic-linux-commands)
-   * [Setup](#setup)
-   * [Workshop Outline](#workshop-outline)
+   * [Ansible Server Configuration](#ansible-server-configuration)
+        * [Ansible "Hello World"](#ansible-hello-world)
+        * [Ansible Configuration](#ansible-configuration)
+        * [Ansible Inventory](#ansible-inventory)
+        * [Ansible Playbooks](#ansible-playbooks)
+        * [Ansible Roles](#ansible-roles)
    * [Resources](#resources)
    * [Feedback](#feedback)
 
@@ -59,4 +63,70 @@ If you don’t have Ansible installed on your local machine, you can follow our 
 ### Basic Linux Commands
 
 If you are new to Linux commands, you can refer to our [Basic Linux Commands Guide](./docs/linux-basic.md) for a quick overview.
+
+## Ansible Server Configuration 
+
+Now that you have your VPS set up and Ansible installed, let’s start with the Ansible configuration. We will create a new Ansible project to hold our playbooks and configurations.
+
+1. Create a new directory for your Ansible project:
+
+```bash
+mkdir ansible-project
+``
+
+2. Change to the newly created directory:
+
+```bash
+cd ansible-project
+```
+
+### Ansible "Hello World"
+
+Let's start with a simple Ansible Playbook to print "Hello, World!" and to check the connection with your VPS. Create a new file named `site.yml` in your project directory with the following content:
+
+```yaml
+---
+- hosts: localhost
+  tasks:
+    - name: Print Hello World
+      ansible.builtin.debug:
+        msg: "Hello, World!"
+```
+
+Now, run the playbook using the following command:
+
+```bash
+ansible-playbook site.yml
+```
+If you see the output `Hello, World!`, your Ansible setup is working correctly.
+
+Now, let's test the connection with our VPS. The first step is to create an inventory file to define the VPS IP address. Create a new file named `inventory.yml` in your project directory with the following content:
+
+```yaml
+vps:
+  hosts:
+    mycloud.com:
+```
+After creating the inventory file, update the `site.yml` playbook to use the VPS group or host's name as the target host:
+
+```yaml
+---
+- hosts: vps
+  tasks:
+
+    - name: Print Hello World
+      ansible.builtin.debug:
+        msg: "Hello, World!"
+
+    - name: Ping
+      ansible.builtin.ping:
+```
+After updating the playbook, run it using the following command:
+
+```bash
+ansible-playbook -i inventory.yml site.yml 
+```
+If you see the output `pong`, the connection with your VPS is successful.
+
+A list with all the Ansible modules can be found [here](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/index.html).
 
