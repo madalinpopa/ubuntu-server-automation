@@ -26,11 +26,31 @@ To generate an SSH key pair, follow these steps:
     ssh-keygen -t ed25519 -C "your_email@example.com"
     ```
 
-3. You will be prompted to choose a location to save the key pair. Press `Enter` to save the key pair in the default location (`~/.ssh/id_rsa`).
+3. You will be prompted to choose a location to save the key pair. Press `Enter` to save the key pair in the default location (`~/.ssh/ed25519`).
 
 4. You will also be prompted to enter a passphrase to secure your private key. You can choose to set a passphrase or leave it empty for no passphrase.
 
 5. Once the key pair is generated, you will see a message confirming the creation of the key pair.
+
+## Create SSH config file
+
+Create a `config` file in the `~/.ssh` directory to store the SSH key configuration. This file allows you to define the SSH key to use for specific hosts.
+
+1. Open the `config` file in the `~/.ssh` directory:
+
+   ```bash
+   nano ~/.ssh/config
+   ```
+
+2. Add the following configuration to the `config` file:
+
+   ```bash
+    Host mycloud.com
+         HostName <vps_ip>
+         IdentityFile ~/.ssh/ed25519
+         IdentityOnly yes
+         User <username>
+    ```
 
 ## Copying the Public Key to Your VPS
 
@@ -39,7 +59,7 @@ To copy the public key to your VPS, follow these steps:
 1. Run the following command to display the contents of your public key:
 
    ```bash
-   cat ~/.ssh/id_rsa.pub
+   cat ~/.ssh/ed25519.pub
    ```
 
 2. Copy the output of the command.
@@ -72,7 +92,7 @@ To copy the public key to your VPS, follow these steps:
 Also, you can use `ssh-copy-id` to copy the public key to your VPS. Run the following command:
 
 ```bash
-ssh-copy-id -i ~/.ssh/id_rsa.pub <username>@<vps_ip>
+ssh-copy-id -i ~/.ssh/ed25519.pub <username>@<vps_ip>
 ```
 
 ## Testing the SSH Connection
@@ -81,7 +101,7 @@ To test the SSH connection using the SSH key pair, run the following command:
 
 ```bash
 
-ssh -i ~/.ssh/id_rsa <username>@<vps_ip>
+ssh -i ~/.ssh/ed25519 <username>@<vps_ip>
 ```
 
 Replace `<username>` with your username on the VPS and `<vps_ip>` with the IP address of your VPS.
