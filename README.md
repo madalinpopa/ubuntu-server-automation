@@ -19,6 +19,8 @@ OmniOpenCon is a gathering of people, projects and communities involved in all t
     * [Ansible Roles](#ansible-roles)
  * [Server Configuration](#server-configuration)
     * [Package Installation](#package-installation)
+        * [Common Packages](#common-packages)
+        * [Docker Installation](#docker-installation)
     * [Security Setup](#security-setup)
     * [Service Configuration](#service-configuration)
 * [Resources](#resources)
@@ -238,6 +240,8 @@ Now that we have our Ansible project set up, let's move on to configuring our VP
 
 ### Package Installation
 
+#### Common Packages
+
 The first step in setting up our VPS is to install essential packages required for development. We will use Ansible to automate the package installation process. We will create manually an Ansible role named `packages` to handle the package installation tasks.
 
 1. Create a new folder `roles` in your project directory:
@@ -353,4 +357,4 @@ ansible-playbook -i inventory.yml site.yml
 ```
 If the playbook runs successfully, you should see the required packages installed on your VPS.
 
-
+#### Docker Installation
