@@ -19,11 +19,9 @@ Before you begin, you need to select a VPS provider that meets the following cri
 
 3. Support for full disk encryption on virtual disks: Ensures that your data is encrypted at rest.
 
-4. Reasonable pricing: Choose a provider that fits your budget and offers the features you need.
+4. Good network connectivity: Ensure that the provider has good network connectivity and low latency to your location.
 
-5. Good network connectivity: Ensure that the provider has good network connectivity and low latency to your location.
-
-6. Data center locations: Choose a provider with data centers in regions that are close to your target audience or have good connectivity to your location.
+5. Data center locations: Choose a provider with data centers in regions that are close to your target audience or have good connectivity to your location.
 
 
 ## VPS Disk Encryption
