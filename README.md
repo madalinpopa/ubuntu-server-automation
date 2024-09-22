@@ -18,8 +18,8 @@ OmniOpenCon is a gathering of people, projects and communities involved in all t
     * [Ansible Playbooks](#ansible-playbooks)
     * [Ansible Roles](#ansible-roles)
  * [Server Configuration](#server-configuration)
-    * [Security Setup](#security-setup)
     * [Package Installation](#package-installation)
+    * [Security Setup](#security-setup)
     * [Service Configuration](#service-configuration)
 * [Resources](#resources)
 * [Feedback](#feedback)
@@ -225,4 +225,101 @@ Also you can import a role from a different directory:
 
 In this workshop, we will create different roles as a way to organize our playbooks and tasks. Usually a role is created for each service or component that you want to configure. As per the Ansible documentation a role should be a self-contained collection of variables, tasks, files, templates, and modules that can be used to configure a specific component or service.
 
+## Server Configuration
 
+Now that we have our Ansible project set up, let's move on to configuring our VPS. We will focus on the following areas:
+
+- Package Installation: Install essential packages like Docker, Git, and Python.
+- Security Setup: Configure firewall rules, enable SSH hardening, and set up fail2ban.
+- Service Configuration: Set up Docker and Docker Compose for running development environments.
+
+
+### Package Installation
+
+The first step in setting up our VPS is to install essential packages required for development. We will use Ansible to automate the package installation process. We will create manually an Ansible role named `packages` to handle the package installation tasks.
+
+1. Create a new folder `roles` in your project directory:
+
+```bash
+mkdir roles
+```
+
+2. Create a new role named `packages` either using the `ansible-galaxy` command or manually:
+
+Using `ansible-galaxy`:
+```bash
+ansible-galaxy init roles/packages
+```
+Manually:
+```bash
+mkdir -p roles/packages
+```
+
+3. Inside `roles/packages/tasks/`, create a new file named `apt.yml` with the following content:
+
+```yaml
+---
+- name: Set timezone to Europe/Bucharest
+  community.general.timezone:
+    name: Europe/Bucharest
+
+- name: Run "apt-get update"
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Update all packages to their latest version
+  ansible.builtin.apt:
+    name: "*"
+    state: latest
+
+- name: Install required packages
+  ansible.builtin.apt:
+    pkg:
+    - build-essential           # Development tools
+    - bash-completion           # Bash completion
+    - apt-transport-https       # HTTPS support for APT
+    - ca-certificates           # CA certificates
+    - python3-full              # Latest Python 3
+    - python3-pip               # Python package installer
+    - gnupg                     # GnuPG
+    - curl                      # Transfer data with URLs
+    - procps                    # Process utilities    
+    - file                      # File type identification
+    - ufw                       # Uncomplicated Firewall
+    - git                       # Version control system
+    - vim                       # Text editor
+
+```
+
+4. Create a new file (if it doesn't exist) named `main.yml` in the `roles/packages/tasks/` directory with the following content:
+
+```yaml
+---
+- import_tasks: apt.yml
+```
+
+5. Update the `site.yml` playbook to include the `packages` role:
+
+To use a role in a playbook, you have two options: you can include the role directly in the playbook or you can use the import role task.
+
+Using the `roles` directive:
+
+```yaml
+---
+- hosts: vps
+  roles:
+    - role: packages
+```
+
+Using the `import_role` task:
+
+```yaml
+---
+- hosts: vps
+  tasks:
+
+    - name: Include packages role
+      ansible.builtin.import_role:
+        name: packages
+```
+We will use the second option in this workshop.
