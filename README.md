@@ -8,6 +8,10 @@ OmniOpenCon is a gathering of people, projects and communities involved in all t
 
    * [Abstract](#abstract)
    * [Prerequisites](#prerequisites)
+        * [VPS Setup](#vps-setup)
+        * [Ansible Installation](#ansible-installation)
+        * [Generate SSH Key Pair](#generate-ssh-key-pair)
+        * [Basic Linux Commands](#basic-linux-commands)
    * [Setup](#setup)
    * [Workshop Outline](#workshop-outline)
    * [Resources](#resources)
