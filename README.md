@@ -178,3 +178,35 @@ Ansible playbooks are YAML files that define a set of tasks to be executed on th
 A list with all the Ansible modules can be found [here](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/index.html).
 
 Also, you can find a list of all the Ansible modules in the [Ansible documentation](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/index.html).
+
+### Ansible Roles
+
+Ansible roles are a way to organize playbooks and tasks into reusable units. Roles allow you to encapsulate the configuration of a specific component or service, making it easier to reuse and share across different projects.
+
+Roles are stored in the `roles` directory within the Ansible project directory. Each role consists of a predefined directory structure containing tasks, handlers, variables, and other configuration files.
+
+To create a new role, use the `ansible-galaxy` command:
+
+```bash
+ansible-galaxy init <role_name>
+```
+This command creates a new role directory structure with the following subdirectories:
+
+- `defaults`: Contains default variables for the role.
+- `files`: Contains files to be copied to the target hosts.
+- `handlers`: Contains handlers that are triggered by tasks.
+- `meta`: Contains metadata for the role.
+- `tasks`: Contains tasks to be executed on the target hosts.
+- `templates`: Contains Jinja2 templates to be rendered on the target hosts.
+- `vars`: Contains variables specific to the role.
+
+Roles can be included in playbooks using the `roles` directive:
+
+```yaml
+---
+- hosts: localhost
+  roles:
+    - role: <role_name>
+```
+This directive tells Ansible to include the specified role in the playbook.
+
