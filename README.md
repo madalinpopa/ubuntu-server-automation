@@ -100,13 +100,15 @@ ansible-playbook site.yml
 ```
 If you see the output `Hello, World!`, your Ansible setup is working correctly.
 
-Now, let's test the connection with our VPS. The first step is to create an inventory file to define the VPS IP address. Create a new file named `inventory.yml` in your project directory with the following content:
+Now, let's test the connection with our VPS. The first step is to create an inventory file to define the VPS host. Create a new file named `inventory.yml` in your project directory with the following content:
 
 ```yaml
 vps:
   hosts:
     mycloud.com:
 ```
+If you followed the steps in SSH Key Pair Generation Guide, you can use `mycloud.com` as the host name. If you used a different host name, replace `mycloud.com` with your VPS host name that you defined in the SSH configuration file.
+
 After creating the inventory file, update the `site.yml` playbook to use the VPS group or host's name as the target host:
 
 ```yaml
