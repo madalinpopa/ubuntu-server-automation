@@ -170,7 +170,6 @@ Ansible is looking for the configuration file in the following order:
 If you want to use a different configuration file, you can set the `ANSIBLE_CONFIG` environment variable to the desired file path.
 Usually is best to have the configuration file in your home directory.
 
-
 ### Ansible Playbooks
 
 Ansible playbooks are YAML files that define a set of tasks to be executed on the target hosts. Playbooks can include multiple plays, each targeting different hosts or groups of hosts. Each play consists of tasks that define the actions to be performed on the target hosts.
@@ -209,4 +208,17 @@ Roles can be included in playbooks using the `roles` directive:
     - role: <role_name>
 ```
 This directive tells Ansible to include the specified role in the playbook.
+
+Also you can import a role from a different directory:
+
+```yaml
+---
+- hosts: localhost
+  tasks:
+    - import_role:
+        name: /path/to/role
+```
+
+In this workshop, we will create different roles as a way to organize our playbooks and tasks. Usually a role is created for each service or component that you want to configure. As per the Ansible documentation a role should be a self-contained collection of variables, tasks, files, templates, and modules that can be used to configure a specific component or service.
+
 
