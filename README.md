@@ -6,19 +6,23 @@ OmniOpenCon is a gathering of people, projects and communities involved in all t
 
 ## Table of Contents
 
-   * [Abstract](#abstract)
-   * [Prerequisites](#prerequisites)
-        * [VPS Setup](#vps-setup)
-        * [Ansible Installation](#ansible-installation)
-        * [Basic Linux Commands](#basic-linux-commands)
-   * [Ansible Project Setup](#ansible-project-setup)
+* [Abstract](#abstract)
+* [Prerequisites](#prerequisites)
+    * [VPS Setup](#vps-setup)
+    * [Ansible Installation](#ansible-installation)
+    * [Basic Linux Commands](#basic-linux-commands)
+    * [Ansible Project Setup](#ansible-project-setup)
         * [Ansible "Hello World"](#ansible-hello-world)
         * [Ansible Inventory](#ansible-inventory)
         * [Ansible Configuration](#ansible-configuration)
         * [Ansible Playbooks](#ansible-playbooks)
         * [Ansible Roles](#ansible-roles)
-   * [Resources](#resources)
-   * [Feedback](#feedback)
+    * [Server Configuration](#server-configuration)
+        * [Security Setup](#security-setup)
+        * [Package Installation](#package-installation)
+        * [Service Configuration](#service-configuration)
+* [Resources](#resources)
+* [Feedback](#feedback)
 
 ## Abstract
 
