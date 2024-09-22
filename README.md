@@ -28,7 +28,9 @@ OmniOpenCon is a gathering of people, projects and communities involved in all t
 
 Welcome to OmniOpenCon 2024 and this workshop titled “From Zero to DevOps Cloud: Ansible-Driven VPS Setup for Development.”
 
-In this hands-on session, you will learn how to automate the process of setting up a VPS from scratch using Ansible. We will focus on leveraging Ansible to handle all the configuration tasks that typically require manual intervention, including security setup, package installations, and service configurations. By the end of this workshop, you will:
+This is a hands-on workshop part of OmniOpenCon 2024, where we will explore how to automate the process of setting up a Virtual Private Server (VPS) from scratch using Ansible. We will focus on leveraging Ansible to handle all the configuration tasks that typically require manual intervention, including security setup, package installations, and service configurations.
+
+By the end of this workshop, you will have a fully automated VPS setup for development purposes, using Ansible playbooks. You will also learn how to deploy services like Docker to run your development environments and set up secure access to your VPS and services using a VPN.
 
 - Understand the basics of Ansible and its role in automating infrastructure setup.
 - Learn how to write Ansible playbooks to define the desired state of your VPS.
