@@ -12,6 +12,7 @@ More information about Ansible can be found on the official [Ansible website](ht
 * [Install Ansible Using `pipx`](#install-ansible-using-pipx)
 * [Install Ansible on MacOS](#install-ansible-on-macos)
 * [Install Ansible on Windows](#install-ansible-on-windows)
+* [Ansible Tools](#ansible-Tools)
 
 
 There are multiple ways to install Ansible, depending on your operating system. In this guide, we will focus on installing Ansible on Ubuntu, one of the most popular Linux distributions.
@@ -111,4 +112,15 @@ To install Ansible on Windows, you can use the Windows Subsystem for Linux (WSL)
     ```bash
     ansible --version
     ```
+
+## Ansible Tools
+
+After installing Ansible, you will have access to several command-line tools that can be used to interact with Ansible. Here are some of the common Ansible binaries:
+
+* `ansible`: The main command-line tool for running Ansible commands and playbooks.
+* `ansible-playbook`: Used to run Ansible playbooks, which are YAML files containing a series of tasks to be executed on remote hosts.
+* `ansible-galaxy`: Used to interact with the Ansible Galaxy website, where you can find and share Ansible roles.
+* `ansible-vault`: Used to encrypt and decrypt sensitive data within Ansible playbooks.
+
+You can use these command-line tools to manage your infrastructure, automate tasks, and streamline your development workflow.
 
