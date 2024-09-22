@@ -11,10 +11,10 @@ OmniOpenCon is a gathering of people, projects and communities involved in all t
         * [VPS Setup](#vps-setup)
         * [Ansible Installation](#ansible-installation)
         * [Basic Linux Commands](#basic-linux-commands)
-   * [Ansible Server Configuration](#ansible-server-configuration)
+   * [Ansible Project Setup](#ansible-project-setup)
         * [Ansible "Hello World"](#ansible-hello-world)
-        * [Ansible Configuration](#ansible-configuration)
         * [Ansible Inventory](#ansible-inventory)
+        * [Ansible Configuration](#ansible-configuration)
         * [Ansible Playbooks](#ansible-playbooks)
         * [Ansible Roles](#ansible-roles)
    * [Resources](#resources)
@@ -64,7 +64,7 @@ If you don’t have Ansible installed on your local machine, you can follow our 
 
 If you are new to Linux commands, you can refer to our [Basic Linux Commands Guide](./docs/linux-basic.md) for a quick overview.
 
-## Ansible Server Configuration 
+## Ansible Project Setup 
 
 Now that you have your VPS set up and Ansible installed, let’s start with the Ansible configuration. We will create a new Ansible project to hold our playbooks and configurations.
 
@@ -100,6 +100,16 @@ ansible-playbook site.yml
 ```
 If you see the output `Hello, World!`, your Ansible setup is working correctly.
 
+### Ansible Inventory 
+
+Ansible uses the inventory file to define the target hosts for the playbooks. The inventory file can be in various formats, including INI, YAML, and JSON. In this workshop, we will use the YAML format for the inventory file.
+
+Ansible is looking for the inventory file in the following order:
+
+1. The file specified using the `-i` option in the `ansible-playbook` command.
+2. The default inventory file located at `/etc/ansible/hosts`.
+3. The default inventory file located in the project directory named `inventory`.
+
 Now, let's test the connection with our VPS. The first step is to create an inventory file to define the VPS host. Create a new file named `inventory.yml` in your project directory with the following content:
 
 ```yaml
@@ -131,4 +141,34 @@ ansible-playbook -i inventory.yml site.yml
 If you see the output `pong`, the connection with your VPS is successful.
 
 A list with all the Ansible modules can be found [here](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/index.html).
+
+### Ansible Configuration
+
+Ansible uses a configuration file to define settings like the default inventory file, remote user, and connection type. Create a new file named `ansible.cfg` in your project directory with the following content:
+
+```ini
+[defaults]
+localhost_warning = False
+vault_password_file = ~/.vault-pass.txt
+interpreter_python=auto_silent
+
+[inventory]
+inventory_unparsed_warning = False
+
+[privilege_escalation]
+become_ask_pass = false
+```
+This configuration file disables the warning for using `localhost` as the target host, sets the path to the vault password file, and disables the warning for unparsed inventory files. It also sets the Python interpreter to auto-detect and disables the prompt for privilege escalation password.
+
+As best practice, any sensitive data like passwords should be stored in an encrypted file using Ansible Vault. The `vault_password_file` setting specifies the path to the file containing the vault password.
+
+Ansible is looking for the configuration file in the following order:
+
+1. `ANSIBLE_CONFIG` environment variable.
+2. `ansible.cfg` in the current directory.
+3. `~/.ansible.cfg` in the user's home directory.
+4. `/etc/ansible/ansible.cfg`.
+
+If you want to use a different configuration file, you can set the `ANSIBLE_CONFIG` environment variable to the desired file path.
+Usually is best to have the configuration file in your home directory.
 
