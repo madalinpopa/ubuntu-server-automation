@@ -158,7 +158,7 @@ interpreter_python=auto_silent
 inventory_unparsed_warning = False
 
 [privilege_escalation]
-become_ask_pass = false
+become_ask_pass = true
 ```
 This configuration file disables the warning for using `localhost` as the target host, sets the path to the vault password file, and disables the warning for unparsed inventory files. It also sets the Python interpreter to auto-detect and disables the prompt for privilege escalation password.
 
@@ -318,8 +318,37 @@ Using the `import_role` task:
 - hosts: vps
   tasks:
 
-    - name: Include packages role
-      ansible.builtin.import_role:
+    # The other tasks are above
+    - ansible.builtin.import_role:
         name: packages
+
 ```
 We will use the second option in this workshop.
+
+6. Run the playbook to install the required packages on your VPS:
+
+```bash
+ansible-playbook -i inventory.yml site.yml
+```
+Running the playbook in this form will fail. The reason is that we attempt to install packages with our regular user, which does not have the necessary permissions. To fix this, we need to tell Ansible to run the tasks with elevated privileges. We can do this by enabling privilege escalation in the playbook.
+
+7. Update the `site.yml` playbook to enable privilege escalation:
+
+```yaml
+---
+- hosts: vps
+  tasks:
+
+    - ansible.builtin.import_role:
+        name: packages
+      become: true
+```
+
+8. Run the playbook again with privilege escalation enabled:
+
+```bash
+ansible-playbook -i inventory.yml site.yml
+```
+If the playbook runs successfully, you should see the required packages installed on your VPS.
+
+
