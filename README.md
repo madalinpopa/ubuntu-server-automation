@@ -72,7 +72,7 @@ Now that you have your VPS set up and Ansible installed, let’s start with the 
 
 ```bash
 mkdir ansible-project
-``
+```
 
 2. Change to the newly created directory:
 
