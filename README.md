@@ -10,7 +10,6 @@ OmniOpenCon is a gathering of people, projects and communities involved in all t
    * [Prerequisites](#prerequisites)
         * [VPS Setup](#vps-setup)
         * [Ansible Installation](#ansible-installation)
-        * [Generate SSH Key Pair](#generate-ssh-key-pair)
         * [Basic Linux Commands](#basic-linux-commands)
    * [Setup](#setup)
    * [Workshop Outline](#workshop-outline)
@@ -49,13 +48,13 @@ Before diving into the automation process, make sure you have the following:
 
 If you don’t have a VPS yet, you can follow our [VPS Setup Guide](./docs/vps-setup.md) to create one.
 
-### Ansible Installation
-
-If you don’t have Ansible installed on your local machine, you can follow our [Ansible Installation Guide](./docs/ansible-installation.md).
-
 ### Generate SSH Key Pair
 
 If you don’t have an SSH key pair, you can follow our [SSH Key Pair Generation Guide](./docs/ssh-keypair.md) to create one.
+
+### Ansible Installation
+
+If you don’t have Ansible installed on your local machine, you can follow our [Ansible Installation Guide](./docs/ansible-installation.md).
 
 ### Basic Linux Commands
 
