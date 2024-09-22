@@ -140,8 +140,6 @@ ansible-playbook -i inventory.yml site.yml
 ```
 If you see the output `pong`, the connection with your VPS is successful.
 
-A list with all the Ansible modules can be found [here](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/index.html).
-
 ### Ansible Configuration
 
 Ansible uses a configuration file to define settings like the default inventory file, remote user, and connection type. Create a new file named `ansible.cfg` in your project directory with the following content:
@@ -172,3 +170,11 @@ Ansible is looking for the configuration file in the following order:
 If you want to use a different configuration file, you can set the `ANSIBLE_CONFIG` environment variable to the desired file path.
 Usually is best to have the configuration file in your home directory.
 
+
+### Ansible Playbooks
+
+Ansible playbooks are YAML files that define a set of tasks to be executed on the target hosts. Playbooks can include multiple plays, each targeting different hosts or groups of hosts. Each play consists of tasks that define the actions to be performed on the target hosts.
+
+A list with all the Ansible modules can be found [here](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/index.html).
+
+Also, you can find a list of all the Ansible modules in the [Ansible documentation](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/index.html).
