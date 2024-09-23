@@ -803,7 +803,7 @@ Now, few things about fail2ban. Fail2ban is a service that monitors log files fo
 
 In our playbook, we copied a custom configuration for the SSH service. This configuration enables Fail2ban for the SSH service, sets the log file path to `/var/log/auth.log`, and specifies the maximum number of retries and the ban time.
 
-Here are few useful commands for fail2ban-client:
+Below are some useful commands to manage Fail2ban:
 
 - `fail2ban-client status`: Displays the status of all jails.
 - `fail2ban-client status <jail_name>`: Displays the status of a specific jail.
