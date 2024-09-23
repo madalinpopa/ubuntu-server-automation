@@ -291,6 +291,7 @@ mkdir -p roles/packages
     - ca-certificates           # CA certificates
     - python3-full              # Latest Python 3
     - python3-pip               # Python package installer
+    - fail2ban                  # Intrusion prevention software
     - gnupg                     # GnuPG
     - curl                      # Transfer data with URLs
     - procps                    # Process utilities    
@@ -651,6 +652,8 @@ However, if a task in playbook fails before the handler is triggered, the handle
   vars_files:
     - secrets.yml
   tasks:
+    
+    # The other tasks are above
 
     - ansible.builtin.import_role:
         name: security
@@ -667,5 +670,147 @@ However, if a task in playbook fails before the handler is triggered, the handle
     # Thus, you can use the new port in the rest of the tasks
 
 ```
+
+#### Firewall Configuration
+
+A firewall is a network security system that monitors and controls incoming and outgoing network traffic based on predetermined security rules. In this section, we will use Ansible to configure the Uncomplicated Firewall (UFW) on our VPS.
+
+1. Inside `roles/security/tasks/`, create a new file named `firewall.yml` with the following content:
+
+```yaml
+--- 
+- name: Ensure UFW is installed
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+
+- name: Allow SSH connections
+  community.general.ufw:
+    rule: allow
+    port: "{{ ssh_port }}"
+    proto: tcp
+
+- name: Allow Http connections
+  community.general.ufw:
+    rule: allow
+    port: '80'
+    proto: tcp
+
+- name: Allow Https connections
+  community.general.ufw:
+    rule: allow
+    port: '443'
+    proto: tcp
+
+- name: Deny everything and enable UFW
+  community.general.ufw:
+    state: enabled
+    policy: deny
+```
+
+2. Update the `site.yml` playbook to include the `firewall` role:
+
+```yaml
+---
+- hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    # The other tasks are above
+
+    - ansible.builtin.import_role:
+        name: security
+        tasks_from: firewall.yml
+      become: true
+```
+
+After updating the playbook, run it using the following command:
+
+```bash
+ansible-playbook -i inventory.yml site.yml
+```
+
+If the playbook runs successfully, the UFW firewall will be configured to allow SSH, HTTP, and HTTPS connections on your VPS.
+
+#### Fail2ban Configuration
+
+Fail2ban is an intrusion prevention software framework that protects computer servers from brute-force attacks. In this section, we will use Ansible to install and configure Fail2ban on our VPS.
+
+1. Inside `roles/security/tasks/`, create a new file named `fail2ban.yml` with the following content:
+
+```yaml
+---
+- name: Ensure Fail2ban is installed
+  ansible.builtin.apt:
+    name: fail2ban
+    state: present
+
+- name: Copy fail2ban configuration
+  copy:
+    dest: /etc/fail2ban/jail.local
+    content: |
+        [sshd]
+        enabled = true             
+        port = ssh                
+        filter = sshd            
+        logpath = /var/log/auth.log
+        maxretry = 3
+        bantime = 3600
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart_fail2ban
+```
+
+2. Append the following content to the `main.yml` file in the `roles/security/handlers/` directory:
+
+```yaml
+- name: Restart Fail2ban service
+  ansible.builtin.systemd_service:
+    name: fail2ban
+    state: restarted
+    enabled: yes
+  listen: "restart_fail2ban"
+```
+
+3. Update the `site.yml` playbook to include the `fail2ban` role:
+
+```yaml
+---
+- hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    # The other tasks are above
+
+    - ansible.builtin.import_role:
+        name: security
+        tasks_from: fail2ban.yml
+      become: true
+```
+
+After updating the playbook, run it using the following command:
+
+```bash
+ansible-playbook -i inventory.yml site.yml
+```
+
+If the playbook runs successfully, Fail2ban will be installed and configured to protect your VPS from brute-force attacks.
+
+Now, few things about fail2ban. Fail2ban is a service that monitors log files for failed login attempts and blocks the IP addresses of the attackers. The configuration file for Fail2ban is located at `/etc/fail2ban/jail.local`. This file contains the settings for the services that Fail2ban monitors and the actions to take when an attack is detected.
+
+In our playbook, we copied a custom configuration for the SSH service. This configuration enables Fail2ban for the SSH service, sets the log file path to `/var/log/auth.log`, and specifies the maximum number of retries and the ban time.
+
+Here are few useful commands for fail2ban-client:
+
+- `fail2ban-client status`: Displays the status of all jails.
+- `fail2ban-client status <jail_name>`: Displays the status of a specific jail.
+- `fail2ban-client set <jail_name> unbanip <ip_address>`: Unbans an IP address from a jail.
+- `fail2ban-client reload`: Reloads the Fail2ban configuration.
+
+
+
 
 
