@@ -47,7 +47,6 @@ Create a `config` file in the `~/.ssh` directory to store the SSH key configurat
    ```
     Host mycloud.com
          HostName <vps_ip>
-         IdentityFile ~/.ssh/ed25519
          IdentitiesOnly yes
          User <username>
     ```
@@ -59,7 +58,7 @@ To copy the public key to your VPS, follow these steps:
 1. Run the following command to display the contents of your public key:
 
    ```bash
-   cat ~/.ssh/ed25519.pub
+   cat ~/.ssh/id_ed25519.pub
    ```
 
 2. Copy the output of the command.
@@ -92,7 +91,7 @@ To copy the public key to your VPS, follow these steps:
 Also, you can use `ssh-copy-id` to copy the public key to your VPS. Run the following command:
 
 ```bash
-ssh-copy-id -i ~/.ssh/ed25519.pub <username>@<vps_ip>
+ssh-copy-id -i ~/.ssh/id_ed25519.pub <username>@<vps_ip>
 ```
 
 ## Testing the SSH Connection
@@ -101,7 +100,7 @@ To test the SSH connection using the SSH key pair, run the following command:
 
 ```bash
 
-ssh -i ~/.ssh/ed25519 <username>@<vps_ip>
+ssh -i ~/.ssh/id_ed25519 <username>@<vps_ip>
 ```
 
 Replace `<username>` with your username on the VPS and `<vps_ip>` with the IP address of your VPS.
