@@ -156,7 +156,6 @@ Ansible uses a configuration file to define settings like the default inventory 
 ```ini
 [defaults]
 localhost_warning = False
-vault_password_file = ~/.vault-pass.txt
 interpreter_python=auto_silent
 
 [inventory]
@@ -367,3 +366,178 @@ become_ask_pass = true
 If the playbook runs successfully, you should see the required packages installed on your VPS.
 
 #### Docker Installation
+
+Docker is a popular platform for developing, shipping, and running applications in containers. In this section, we will automate the installation of Docker on our VPS using Ansible.
+
+1. Create a new file named `docker.yml` in the `roles/packages/tasks/` directory with the following content:
+
+```yaml
+- name: Add Docker GPG apt Key
+  vars:
+    keyrings: /etc/apt/keyrings
+    apt_repo: https://download.docker.com/linux/ubuntu
+  block:
+    - name: Create /etc/apt/keyrings directory
+      ansible.builtin.file:
+        path: "{{ keyrings }}"
+        state: directory
+        mode: '0755'
+
+    - name: Download docker gpg key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: "{{ keyrings }}/docker.asc"
+
+    - name: Add docker apt repository
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by={{ keyrings }}/docker.asc] {{ apt_repo }} {{ ansible_distribution_release }} stable"
+        filename: docker
+        state: present
+
+- name: Install the latest version of Docker engine
+  block:
+    - name: Install docker package
+      ansible.builtin.package:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+
+    - name: Create docker group
+      ansible.builtin.group:
+        name: docker
+        state: present
+
+    - name: Add playbook user to docker group
+      ansible.builtin.user:
+        name: "{{ username }}"
+        groups:
+          - docker
+        append: yes
+        state: present
+
+    - name: Enable docker service
+      ansible.builtin.service:
+        name: docker.service
+        enabled: yes
+
+    - name: Enable containerd service
+      ansible.builtin.service:
+        name: containerd.service
+        enabled: yes
+
+    - name: Copy daemon.json
+      ansible.builtin.template:
+        dest: "/etc/docker/daemon.json"
+        src: "daemon.json"
+      notify: restart_docker
+
+```
+
+2. Create a new file named `daemon.json` in the `roles/packages/files/` directory with the following content:
+
+```json
+{
+  "default-address-pools": [
+    {
+      "base": "172.18.0.0/16",
+      "size": 24
+    }
+  ],
+  "experimental": false,
+  "features": {
+    "buildkit": true
+  }
+}
+```
+
+3. Create a new file `main.yml` in the `roles/packages/handlers/` directory with the following content:
+
+```yaml
+---
+- name: restart_docker
+  become: true
+  ansible.builtin.systemd_service:
+    name: docker
+    state: restarted
+```
+4. Update the `site.yml` playbook to include the `docker` role:
+
+```yaml
+---
+- hosts: vps
+  tasks:
+
+    - ansible.builtin.import_role:
+        name: packages
+      become: true
+
+    - ansible.builtin.import_role:
+        name: packages
+        tasks_from: docker.yml
+      become: true
+```
+
+Before running the playboo, we need to discuss a little bit how to handle sensitive data in Ansible. As you were able to see, in our docker tasks, we have a variable `username` that is not defined anywhere. This is because we don't want to hardcode sensitive data in our playbooks. Instead, we can use Ansible Vault to encrypt sensitive data and store it securely.
+
+To create a new encrypted file using Ansible Vault, you can use the following command:
+
+```bash
+ansible-vault create secrets.yml
+```
+Now, you can add the sensitive data to the file and save it. To edit an existing encrypted file, you can use the `edit` command:
+
+```bash
+ansible-vault edit secrets.yml
+```
+To view the contents of an encrypted file, you can use the `view` command:
+
+```bash
+ansible-vault view secrets.yml
+```
+
+To run a playbook that uses an encrypted file, you need to provide the vault password using the `--ask-vault-pass` flag:
+
+```bash
+ansible-playbook -i inventory.yml site.yml --ask-vault-pass
+```
+However, typing the vault password every time you run a playbook can be cumbersome. To avoid this, you can store the vault password in a file and reference it in the ansible.cfg file:
+
+```ini
+[defaults]
+vault_password_file = ~/.vault-pass.txt
+```
+Make sure to set the correct permissions on the vault password file to keep it secure:
+
+```bash
+chmod 600 ~/.vault-pass.txt
+```
+Now, we need to reference the `secretes.yml` file in our `site.yml` playbook. We will define the `username` variable in the `secrets.yml` file and use it in the `docker.yml` tasks.
+
+```yaml
+---
+- hosts: vps
+  tasks:
+  vars_files:
+    - secrets.yml
+
+    - ansible.builtin.import_role:
+        name: packages
+      become: true
+
+    - ansible.builtin.import_role:
+        name: packages
+        tasks_from: docker.yml
+      become: true
+```
+After updating the playbook, run it using the following command:
+
+```bash
+ansible-playbook -i inventory.yml site.yml
+```
+This way, you can securely store and manage sensitive data in your Ansible playbooks using Ansible Vault.
+
+
