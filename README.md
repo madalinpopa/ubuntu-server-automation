@@ -354,8 +354,16 @@ Running the playbook in this form will fail. The reason is that we attempt to in
 8. Run the playbook again with privilege escalation enabled:
 
 ```bash
-ansible-playbook -i inventory.yml site.yml
+ansible-playbook -i inventory.yml site.yml --ask-become-pass
 ```
+You will be prompted to enter the password for the sudo user on your VPS. Enter the password to proceed with the installation.
+To avoid passing the `--ask-become-pass` flag every time you run the playbook, you can update ansible.cfg to enable privilege escalation by default:
+
+```ini
+[privilege_escalation]
+become_ask_pass = true
+```
+
 If the playbook runs successfully, you should see the required packages installed on your VPS.
 
 #### Docker Installation
