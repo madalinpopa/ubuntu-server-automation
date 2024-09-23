@@ -23,9 +23,13 @@ OmniOpenCon is a gathering of people, projects and communities involved in all t
         * [Common Packages](#common-packages)
         * [Docker Installation](#docker-installation)
     * [Security Setup](#security-setup)
+        * [SSH Configuration](#ssh-configuration)
+        * [Firewall Configuration](#firewall-configuration)
+        * [Fail2ban Configuration](#fail2ban-configuration)
     * [Service Configuration](#service-configuration)
 * [Resources](#resources)
 * [Feedback](#feedback)
+
 
 ## Abstract
 
@@ -229,6 +233,7 @@ Also you can import a role from a different directory:
 
 In this workshop, we will create different roles as a way to organize our playbooks and tasks. Usually a role is created for each service or component that you want to configure. As per the Ansible documentation a role should be a self-contained collection of variables, tasks, files, templates, and modules that can be used to configure a specific component or service.
 
+
 ## Server Configuration
 
 Now that we have our Ansible project set up, let's move on to configuring our VPS. We will focus on the following areas:
@@ -236,7 +241,6 @@ Now that we have our Ansible project set up, let's move on to configuring our VP
 - Package Installation: Install essential packages like Docker, Git, and Python.
 - Security Setup: Configure firewall rules, enable SSH hardening, and set up fail2ban.
 - Service Configuration: Set up Docker and Docker Compose for running development environments.
-
 
 ### Package Installation
 
@@ -473,10 +477,6 @@ Docker is a popular platform for developing, shipping, and running applications 
 
     - ansible.builtin.import_role:
         name: packages
-      become: true
-
-    - ansible.builtin.import_role:
-        name: packages
         tasks_from: docker.yml
       become: true
 ```
@@ -520,13 +520,9 @@ Now, we need to reference the `secretes.yml` file in our `site.yml` playbook. We
 ```yaml
 ---
 - hosts: vps
-  tasks:
   vars_files:
     - secrets.yml
-
-    - ansible.builtin.import_role:
-        name: packages
-      become: true
+  tasks:
 
     - ansible.builtin.import_role:
         name: packages
@@ -539,5 +535,137 @@ After updating the playbook, run it using the following command:
 ansible-playbook -i inventory.yml site.yml
 ```
 This way, you can securely store and manage sensitive data in your Ansible playbooks using Ansible Vault.
+
+### Security Setup
+
+Security is a critical aspect of any infrastructure setup. In this section, we will focus on setting up basic security measures on our VPS using Ansible.
+
+#### SSH Configuration
+
+The SSH configuration file is located at `/etc/ssh/sshd_config` and contains settings related to the SSH server. We will use Ansible to update the SSH configuration file to enhance security.
+
+First, we will create a new role named `security` to handle all the tasks related to security setup.
+
+1. Create a new role named `security` either using the `ansible-galaxy` command or manually:
+
+Manually:
+```bash
+mkdir -p roles/security
+```
+
+2. Inside `roles/security/tasks/`, create a new file named `ssh.yml` with the following content:
+
+```yaml
+---
+- name: Harden SSH Configuration
+  ansible.builtin.blockinfile:
+    path: /etc/ssh/sshd_config
+    block: |
+      Protocol 2
+      PermitRootLogin no
+      PasswordAuthentication no
+      AllowUsers {{ username }}
+      Port {{ ssh_port }}
+      PubkeyAuthentication yes
+      ClientAliveInterval 300
+      ClientAliveCountMax 0
+      MaxAuthTries 3
+      LogLevel VERBOSE
+      MaxStartups 10:30:60
+    backup: yes
+  notify: "restart_ssh"
+  changed_when: true
+
+- name: Update Ansible to use new SSH port
+  ansible.builtin.set_fact:
+    ansible_port: "{{ ssh_port }}"
+```
+
+3. Create a new file `main.yml` in the `roles/security/handlers/` directory with the following content:
+
+```yaml
+---
+- name: Restart SSH service
+  ansible.builtin.systemd_service:
+    name: ssh
+    state: restarted
+    enabled: yes
+  listen: "restart_ssh"
+```
+
+4. Update the `site.yml` playbook to include the `security` role:
+
+```yaml
+---
+- hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    # The other tasks are above
+    - ansible.builtin.import_role:
+        name: security
+        tasks_from: ssh.yml
+      become: true
+```
+
+Now, there is one more thing to do. As you noticed, in our `ssh.yml` tasks, we have a new sensitive variable called `ssh_port` that is not defined anywhere. We will define this variable in the `secrets.yml` file and use them in the `ssh.yml` tasks.
+
+Use the `ansible-vault` command with `edit` to open the `secrets.yml` file and add the `ssh_port` variable:
+
+```bash
+ansible-vault edit secrets.yml
+```
+Add the following content to the `secrets.yml` file:
+
+```yaml
+---
+ssh_port: 2222
+```
+
+After updating the playbook, run it using the following command:
+
+```bash
+ansible-playbook -i inventory.yml site.yml
+```
+
+**IMPORTANT**: At this point, the SSH port has been changed to `2222`. Make sure to update your SSH client configuration to use the new port when connecting to your VPS.
+
+In order to connect to your VPS using the new SSH port, you can update your SSH configuration file (`~/.ssh/config`) with the following content:
+
+```bash
+Host mycloud.com
+  HostName mycloud.com
+  Port 2222
+  User <your_username>
+  IdentityFile ~/.ssh/id_rsa
+```
+
+Another important aspect related to Ansible handlers, is that they are triggered only at the end of the play. This means that if you have multiple tasks that require a handler, the handler will be triggered only after all the tasks have been executed. This can be useful when you want to restart a service only once, even if multiple tasks require it.
+
+However, if a task in playbook fails before the handler is triggered, the handler will not be executed. To ensure that the handler is always triggered, you can use the `meta: flush_handlers` directive in the playbook:
+
+```yaml
+---
+- hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    - ansible.builtin.import_role:
+        name: security
+        tasks_from: ssh.yml
+      become: true
+
+    - name: Force all notified handlers to run at this point, not waiting for normal sync points
+      ansible.builtin.meta: flush_handlers
+
+    # For other tasks to be executed you need to tell Ansible what is the new port:
+    - name: Update Ansible to use new SSH port
+      ansible.builtin.set_fact:
+        ansible_port: "{{ ssh_port }}"
+    # Thus, you can use the new port in the rest of the tasks
+
+```
 
 
