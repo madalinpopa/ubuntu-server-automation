@@ -44,11 +44,11 @@ Create a `config` file in the `~/.ssh` directory to store the SSH key configurat
 
 2. Add the following configuration to the `config` file:
 
-   ```bash
+   ```
     Host mycloud.com
          HostName <vps_ip>
          IdentityFile ~/.ssh/ed25519
-         IdentityOnly yes
+         IdentitiesOnly yes
          User <username>
     ```
 
