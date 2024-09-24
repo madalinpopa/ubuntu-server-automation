@@ -885,7 +885,7 @@ Add the following task to the `site.yml` playbook:
         tasks_from: ssh.yml
       become: true
 
-    - name: Force all notified handlers to run at this point, not waiting for normal sync points
+    - name: Force all notified handlers to run at this point
       ansible.builtin.meta: flush_handlers
 
     - name: Update Ansible to use new SSH port
