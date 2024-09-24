@@ -46,7 +46,6 @@ By following this guide, you will:
 - Learn how to write Ansible playbooks to define the desired state of your Ubuntu server.
 - Set up a fully automated VPS environment, tailored for development and production use cases.
 - Deploy services like Docker to run your applications in isolated environments.
-- Implement secure access to your VPS and private services using a VPN (via Dockovpn).
 - Use Caddy as a reverse proxy to manage both public and private services.
 
 This project is designed to minimize manual setup and centralize configuration management within Ansible, allowing for reproducible, scalable infrastructure deployments. Whether you're setting up a cloud VPS or a local server, this project aims to streamline your DevOps workflow.
@@ -1353,8 +1352,6 @@ PostgreSQL is a powerful, open-source relational database management system. In 
     env:
       POSTGRES_USER: "{{ postgres_db_user }}"
       POSTGRES_PASSWORD: "{{ postgres_db_pass }}"
-    ports:
-      - "5432:5432"
     networks:
       - name: "{{ postgres['network'] }}"
     volumes:
@@ -1584,7 +1581,7 @@ pgadmin:
     container_image: dpage/pgadmin4:latest
     container_name: pgadmin
     container_hostname: pgadmin
-    network: private
+    network: public
 ```
 
 For the `pgadmin_email` and `pgadmin_password` variables, we will use the `secrets.yml` file to store the sensitive data.
@@ -1709,9 +1706,3 @@ http://pgadmin.<your_domain>
         name: services
         tasks_from: pgadmin.yml
 ```
-
-
-
-
-
-
