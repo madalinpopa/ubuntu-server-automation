@@ -713,6 +713,12 @@ This is an Ansible handler that reloads the Caddy service after the configuratio
       become: true
 ```
 
+6. Run the playbook to install Caddy on your VPS:
+
+```bash
+ansible-playbook -i inventory.yml site.yml
+```
+
 At this point our `site.yml` playbook should look like this:
 
 ```yaml
