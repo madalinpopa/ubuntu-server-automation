@@ -384,8 +384,8 @@ ansible-playbook -i inventory.yml site.yml
 
 If the playbook runs successfully, you should see the required packages installed on your VPS.
 
-🎯 At this point, our `site.yml` playbook should look like this:
----
+|🎯 At this point, our `site.yml` playbook should look like this|
+|---------------------------------------------------------------|
 
 ```yaml
 ---
