@@ -1,8 +1,6 @@
 # Ubuntu Server Setup with Ansible: Automated Provisioning & Configuration
 
-OmniOpenCon is a gathering of people, projects and communities involved in all things open: open source, open data, open science, open hardware, open education. We value openness, freedom and sharing and we want to bring together all who share these beliefs.
-
-## Workshop: From Zero to DevOps Cloud: Ansible-Driven VPS Setup for Development
+This repository provides a comprehensive guide and playbook to automate the provisioning and configuration of an Ubuntu server using Ansible. Whether you're setting up a cloud VPS or a local server, the included Ansible roles will install and configure essential services like Docker, Caddy for reverse proxying, Fail2Ban for security, and more. Designed for developers and system administrators, this setup simplifies server management and automates best practices for secure, scalable infrastructure.
 
 ## Table of Contents
 
