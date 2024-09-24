@@ -119,7 +119,7 @@ If you see the output `Hello, World!`, your Ansible setup is working correctly.
 
 ### Ansible Inventory 
 
-Ansible uses the inventory file to define the target hosts for the playbooks. The inventory file can be in various formats, including INI, YAML, and JSON. In this workshop, we will use the YAML format for the inventory file.
+Ansible uses the inventory file to define the target hosts for the playbooks. The inventory file can be in various formats, including INI, YAML, and JSON. In this guide, we will use the YAML format for the inventory file.
 
 Ansible is looking for the inventory file in the following order:
 
@@ -135,6 +135,8 @@ vps:
     mycloud.com:
 ```
 If you followed the steps in SSH Key Pair Generation Guide, you can use `mycloud.com` as the host name. If you used a different host name, replace `mycloud.com` with your VPS host name that you defined in the SSH configuration file.
+
+In this example, we defined a group named `vps` with a single host named `mycloud.com`. You can define multiple hosts and groups in the inventory file based on your requirements.
 
 After creating the inventory file, update the `site.yml` playbook to use the VPS group or host's name as the target host:
 
@@ -171,9 +173,7 @@ interpreter_python=auto_silent
 inventory_unparsed_warning = False
 
 ```
-This configuration file disables the warning for using `localhost` as the target host, sets the path to the vault password file, and disables the warning for unparsed inventory files. It also sets the Python interpreter to auto-detect and disables the prompt for privilege escalation password.
-
-As best practice, any sensitive data like passwords should be stored in an encrypted file using Ansible Vault. The `vault_password_file` setting specifies the path to the file containing the vault password.
+This configuration file disables the warning for using `localhost` as the target host, and disables the warning for unparsed inventory files. It also sets the Python interpreter to auto-detect.
 
 Ansible is looking for the configuration file in the following order:
 
@@ -183,15 +183,13 @@ Ansible is looking for the configuration file in the following order:
 4. `/etc/ansible/ansible.cfg`.
 
 If you want to use a different configuration file, you can set the `ANSIBLE_CONFIG` environment variable to the desired file path.
-Usually is best to have the configuration file in your home directory.
+Usually is best to have the configuration file in your home directory if you don't have special settings per project.
 
 ### Ansible Playbooks
 
 Ansible playbooks are YAML files that define a set of tasks to be executed on the target hosts. Playbooks can include multiple plays, each targeting different hosts or groups of hosts. Each play consists of tasks that define the actions to be performed on the target hosts.
 
 A list with all the Ansible modules can be found [here](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/index.html).
-
-Also, you can find a list of all the Ansible modules in the [Ansible documentation](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/index.html).
 
 ### Ansible Roles
 
@@ -236,16 +234,15 @@ Also you can import a role from a different directory:
         name: /path/to/role
 ```
 
-In this workshop, we will create different roles as a way to organize our playbooks and tasks. Usually a role is created for each service or component that you want to configure. As per the Ansible documentation a role should be a self-contained collection of variables, tasks, files, templates, and modules that can be used to configure a specific component or service.
-
+In this guide, we will create different roles to organize our playbooks and tasks. Typically, a role is created for each service or component you want to configure. According to the Ansible documentation, a role should be a self-contained collection of variables, tasks, files, templates, and modules that can be reused to configure a specific component or service.
 
 ## Server Configuration
 
 Now that we have our Ansible project set up, let's move on to configuring our VPS. We will focus on the following areas:
 
-- Package Installation: Install essential packages like Docker, Git, and Python.
+- Package Installation: Install essential packages like Docker, Cady, Git, and Python.
 - Security Setup: Configure firewall rules, enable SSH hardening, and set up fail2ban.
-- Service Configuration: Set up Docker and Docker Compose for running development environments.
+- Service Configuration: Create an configure Docker containers with different services.
 
 ### Package Installation
 
@@ -276,7 +273,7 @@ mkdir -p roles/packages
 ---
 - name: Set timezone to Europe/Bucharest
   community.general.timezone:
-    name: Europe/Bucharest
+    name: Europe/Bucharest      # Change this to your timezone
 
 - name: Run "apt-get update"
   ansible.builtin.apt:
@@ -342,14 +339,14 @@ Using the `import_role` task:
         name: packages
 ```
 
-We will use the second option in this workshop.
+We will use the second option in this guide.
 
 6. Run the playbook to install the required packages on your VPS:
 
 ```bash
 ansible-playbook -i inventory.yml site.yml
 ```
-Running the playbook in this form will fail. The reason is that we attempt to install packages with our regular user, which does not have the necessary permissions. To fix this, we need to tell Ansible to run the tasks with elevated privileges. We can do this by enabling privilege escalation in the playbook.
+Running the playbook in this form will fail. The reason is that we attempt to install packages with our regular user, which does not have the necessary permissions. To fix this, we need to tell Ansible to run the tasks with elevated privileges. We can do this by enabling privilege escalation for our import role task.
 
 7. Update the `site.yml` playbook to enable privilege escalation:
 
@@ -370,14 +367,34 @@ Running the playbook in this form will fail. The reason is that we attempt to in
 ansible-playbook -i inventory.yml site.yml --ask-become-pass
 ```
 You will be prompted to enter the password for the sudo user on your VPS. Enter the password to proceed with the installation.
+
 To avoid passing the `--ask-become-pass` flag every time you run the playbook, you can update ansible.cfg to enable privilege escalation by default:
 
+Add the following lines to the `ansible.cfg` file:
 ```ini
 [privilege_escalation]
 become_ask_pass = true
 ```
+After updating the configuration file, you can run the playbook without the `--ask-become-pass` flag:
+
+```bash
+ansible-playbook -i inventory.yml site.yml
+```
 
 If the playbook runs successfully, you should see the required packages installed on your VPS.
+
+At this point, our `site.yml` playbook should look like this:
+
+```yaml
+---
+- name: Configure VPS
+  hosts: vps
+  tasks:
+
+    - ansible.builtin.import_role:
+        name: packages
+      become: true
+```
 
 #### Docker Installation
 
@@ -425,7 +442,7 @@ Docker is a popular platform for developing, shipping, and running applications 
         name: docker
         state: present
 
-    - name: Add playbook user to docker group
+    - name: Add VPS user to docker group
       ansible.builtin.user:
         name: "{{ username }}"
         groups:
@@ -468,6 +485,8 @@ Docker is a popular platform for developing, shipping, and running applications 
 }
 ```
 
+This file contains the Docker daemon configuration settings. In this example, we define a default address pool for container networking and enable the BuildKit feature.
+
 3. Create a new file `main.yml` in the `roles/packages/handlers/` directory with the following content:
 
 ```yaml
@@ -478,6 +497,8 @@ Docker is a popular platform for developing, shipping, and running applications 
     name: docker
     state: restarted
 ```
+This is an Ansible handler that restarts the Docker service after the configuration changes have been applied.
+
 4. Update the `site.yml` playbook to include the `docker` role:
 
 ```yaml
@@ -486,13 +507,15 @@ Docker is a popular platform for developing, shipping, and running applications 
   hosts: vps
   tasks:
 
+    # The other tasks are above
+
     - ansible.builtin.import_role:
         name: packages
         tasks_from: docker.yml
       become: true
 ```
 
-Before running the playboo, we need to discuss a little bit how to handle sensitive data in Ansible. As you were able to see, in our docker tasks, we have a variable `username` that is not defined anywhere. This is because we don't want to hardcode sensitive data in our playbooks. Instead, we can use Ansible Vault to encrypt sensitive data and store it securely.
+Before running the playbook, we need to discuss a little bit how to handle sensitive data in Ansible. As you were able to see, in our docker tasks, we have a variable `{{ username }}` that is not defined anywhere. This is because we don't want to hardcode sensitive data in our playbooks. Instead, we can use Ansible Vault to encrypt sensitive data and store it securely.
 
 To create a new encrypted file using Ansible Vault, you can use the following command:
 
@@ -517,15 +540,18 @@ ansible-playbook -i inventory.yml site.yml --ask-vault-pass
 ```
 However, typing the vault password every time you run a playbook can be cumbersome. To avoid this, you can store the vault password in a file and reference it in the ansible.cfg file:
 
+Add the following lines to the `ansible.cfg` file:
 ```ini
 [defaults]
 vault_password_file = ~/.vault-pass.txt
 ```
+
 Make sure to set the correct permissions on the vault password file to keep it secure:
 
 ```bash
 chmod 600 ~/.vault-pass.txt
 ```
+
 Now, we need to reference the `secretes.yml` file in our `site.yml` playbook. We will define the `username` variable in the `secrets.yml` file and use it in the `docker.yml` tasks.
 
 ```yaml
@@ -535,6 +561,8 @@ Now, we need to reference the `secretes.yml` file in our `site.yml` playbook. We
   vars_files:
     - secrets.yml
   tasks:
+
+    # The other tasks are above
 
     - ansible.builtin.import_role:
         name: packages
@@ -547,6 +575,27 @@ After updating the playbook, run it using the following command:
 ansible-playbook -i inventory.yml site.yml
 ```
 This way, you can securely store and manage sensitive data in your Ansible playbooks using Ansible Vault.
+
+At this point, our `site.yml` playbook should look like this:
+
+```yaml
+---
+- name: Configure VPS
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    - ansible.builtin.import_role:
+        name: packages
+        tasks_from: apt.yml
+      become: true
+
+    - ansible.builtin.import_role:
+        name: packages
+        tasks_from: docker.yml
+      become: true
+```
 
 #### Caddy Installation
 
@@ -587,7 +636,7 @@ Caddy is a powerful, extensible web server that can be used to serve static webs
     name: caddy.service
     enabled: yes
 
-- name: Create Caddy configuration file
+- name: Copy Caddy configuration file
   ansible.builtin.template:
     src: Caddyfile.j2
     dest: /etc/caddy/Caddyfile
@@ -614,6 +663,9 @@ Caddy is a powerful, extensible web server that can be used to serve static webs
     file_server
 }
 ```
+
+This configuration file defines a simple Caddy server that serves files from the `/var/www/html` directory on port 80. The `:80` directive specifies that the server listens on port 80 on all interfaces.
+
 3. Let's create a simple HTML file to serve using Caddy. Create a new file named `index.html` in the `roles/packages/files/` directory with the following content:
 
 ```html
@@ -628,6 +680,7 @@ Caddy is a powerful, extensible web server that can be used to serve static webs
 </body>
 </html>
 ```
+
 4. Create a new file `main.yml` in the `roles/packages/handlers/` directory with the following content:
 
 ```yaml
@@ -638,6 +691,8 @@ Caddy is a powerful, extensible web server that can be used to serve static webs
     name: caddy
     state: reloaded
 ```
+
+This is an Ansible handler that reloads the Caddy service after the configuration changes have been applied.
 
 5. Update the `site.yml` playbook to include the `caddy` role:
 
@@ -657,6 +712,32 @@ Caddy is a powerful, extensible web server that can be used to serve static webs
       become: true
 ```
 
+At this point our `site.yml` playbook should look like this:
+
+```yaml
+---
+- name: Configure VPS
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    - ansible.builtin.import_role:
+        name: packages
+        tasks_from: apt.yml
+      become: true
+
+    - ansible.builtin.import_role:
+        name: packages
+        tasks_from: docker.yml
+      become: true
+
+    - ansible.builtin.import_role:
+        name: packages
+        tasks_from: caddy.yml
+      become: true
+```
+
 ### Security Setup
 
 Security is a critical aspect of any infrastructure setup. In this section, we will focus on setting up basic security measures on our VPS using Ansible.
@@ -667,11 +748,11 @@ The SSH configuration file is located at `/etc/ssh/sshd_config` and contains set
 
 First, we will create a new role named `security` to handle all the tasks related to security setup.
 
-1. Create a new role named `security` either using the `ansible-galaxy` command or manually:
+1. Create a new role named `security`:
 
-Manually:
 ```bash
-mkdir -p roles/security
+mkdir -p roles/security/tasks
+mkdir -p roles/security/handlers
 ```
 
 2. Inside `roles/security/tasks/`, create a new file named `ssh.yml` with the following content:
@@ -702,6 +783,20 @@ mkdir -p roles/security
     ansible_port: "{{ ssh_port }}"
 ```
 
+This task hardens the SSH configuration by setting the following options:
+
+- `Protocol 2`: Specifies that only SSH protocol version 2 should be used.
+- `PermitRootLogin no`: Disables root login via SSH.
+- `PasswordAuthentication no`: Disables password authentication.
+- `AllowUsers {{ username }}`: Specifies the user allowed to log in via SSH.
+- `Port {{ ssh_port }}`: Specifies the SSH port to use.
+- `PubkeyAuthentication yes`: Enables public key authentication.
+- `ClientAliveInterval 300`: Sends a null packet to the client every 300 seconds.
+- `ClientAliveCountMax 0`: Disables client alive messages.
+- `MaxAuthTries 3`: Limits the number of authentication attempts.
+- `LogLevel VERBOSE`: Sets the log level to VERBOSE.
+- `MaxStartups 10:30:60`: Limits the number of concurrent unauthenticated connections.
+
 3. Create a new file `main.yml` in the `roles/security/handlers/` directory with the following content:
 
 ```yaml
@@ -724,6 +819,7 @@ mkdir -p roles/security
   tasks:
 
     # The other tasks are above
+
     - ansible.builtin.import_role:
         name: security
         tasks_from: ssh.yml
@@ -750,21 +846,22 @@ After updating the playbook, run it using the following command:
 ansible-playbook -i inventory.yml site.yml
 ```
 
-**IMPORTANT**: At this point, the SSH port has been changed to `2222`. Make sure to update your SSH client configuration to use the new port when connecting to your VPS.
+At this point, the SSH port has been changed to `2222`. We meed to update our SSH client configuration `~/.ssh/config` to use the new port when connecting to VPS.
 
-In order to connect to your VPS using the new SSH port, you can update your SSH configuration file (`~/.ssh/config`) with the following content:
+Add the following content to the `~/.ssh/config` file:
 
 ```bash
 Host mycloud.com
-  HostName mycloud.com
-  Port 2222
+  HostName <vps_ip_or_domain>
   User <your_username>
-  IdentityFile ~/.ssh/id_rsa
+  Port 2222
 ```
 
-Another important aspect related to Ansible handlers, is that they are triggered only at the end of the play. This means that if you have multiple tasks that require a handler, the handler will be triggered only after all the tasks have been executed. This can be useful when you want to restart a service only once, even if multiple tasks require it.
+Another important aspect related to Ansible handlers, is that they are triggered only at the end of the play. This means that if you have multiple tasks that require a handler, the handler will be triggered only after all the tasks in playbook have been executed. This can be useful when you want to restart a service only once, even if multiple tasks require it.
 
 However, if a task in playbook fails before the handler is triggered, the handler will not be executed. To ensure that the handler is always triggered, you can use the `meta: flush_handlers` directive in the playbook:
+
+Add the following task to the `site.yml` playbook:
 
 ```yaml
 ---
@@ -784,12 +881,50 @@ However, if a task in playbook fails before the handler is triggered, the handle
     - name: Force all notified handlers to run at this point, not waiting for normal sync points
       ansible.builtin.meta: flush_handlers
 
-    # For other tasks to be executed you need to tell Ansible what is the new port:
     - name: Update Ansible to use new SSH port
       ansible.builtin.set_fact:
         ansible_port: "{{ ssh_port }}"
-    # Thus, you can use the new port in the rest of the tasks
+```
 
+The first task, `meta: flush_handlers`, forces all notified handlers to run at that point in the playbook, not waiting for the normal sync points. This ensures that the handler is triggered even if a task fails before it.
+
+The second task updates the Ansible port to use the new SSH port defined in the `secrets.yml` file. This allows Ansible to use the new port for SSH connections in subsequent tasks.
+
+At this point, our `site.yml` playbook should look like this:
+
+```yaml
+---
+- name: Configure VPS
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    - ansible.builtin.import_role:
+        name: packages
+      become: true
+
+    - ansible.builtin.import_role:
+        name: packages
+        tasks_from: docker.yml
+      become: true
+
+    - ansible.builtin.import_role:
+        name: packages
+        tasks_from: caddy.yml
+      become: true
+
+    - ansible.builtin.import_role:
+        name: security
+        tasks_from: ssh.yml
+      become: true
+
+    - name: Force all notified handlers to run at this point
+      ansible.builtin.meta: flush_handlers
+
+    - name: Update Ansible to use new SSH port
+      ansible.builtin.set_fact:
+        ansible_port: "{{ ssh_port }}"
 ```
 
 #### Firewall Configuration
@@ -855,6 +990,51 @@ ansible-playbook -i inventory.yml site.yml
 
 If the playbook runs successfully, the UFW firewall will be configured to allow SSH, HTTP, and HTTPS connections on your VPS.
 
+The UFW configuration file is located at `/etc/ufw/ufw.conf`. This file contains the settings for the UFW firewall, including the default policy and logging options.
+
+Below are some useful commands to manage UFW:
+
+- `ufw status`: Displays the status of the UFW firewall.
+- `ufw allow <port>/<protocol>`: Allows incoming traffic on a specific port and protocol.
+- `ufw deny <port>/<protocol>`: Denies incoming traffic on a specific port and protocol.
+- `ufw delete <rule_number>`: Deletes a specific rule from the UFW configuration.
+- `ufw reload`: Reloads the UFW configuration.
+
+At this point, our `site.yml` playbook should look like this:
+
+```yaml
+---
+- name: Configure VPS
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    - ansible.builtin.import_role:
+        name: packages
+      become: true
+
+    - ansible.builtin.import_role:
+        name: packages
+        tasks_from: docker.yml
+      become: true
+
+    - ansible.builtin.import_role:
+        name: packages
+        tasks_from: caddy.yml
+      become: true
+
+    - ansible.builtin.import_role:
+        name: security
+        tasks_from: ssh.yml
+      become: true
+
+    - ansible.builtin.import_role:
+        name: security
+        tasks_from: firewall.yml
+      become: true
+```
+
 #### Fail2ban Configuration
 
 Fail2ban is an intrusion prevention software framework that protects computer servers from brute-force attacks. In this section, we will use Ansible to install and configure Fail2ban on our VPS.
@@ -896,6 +1076,8 @@ Fail2ban is an intrusion prevention software framework that protects computer se
   listen: "restart_fail2ban"
 ```
 
+This is an Ansible handler that restarts the Fail2ban service after the configuration changes have been applied.
+
 3. Update the `site.yml` playbook to include the `fail2ban` role:
 
 ```yaml
@@ -933,6 +1115,46 @@ Below are some useful commands to manage Fail2ban:
 - `fail2ban-client set <jail_name> unbanip <ip_address>`: Unbans an IP address from a jail.
 - `fail2ban-client reload`: Reloads the Fail2ban configuration.
 
+At this point, our `site.yml` playbook should look like this:
+
+```yaml
+---
+- name: Configure VPS
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    - ansible.builtin.import_role:
+        name: packages
+      become: true
+
+    - ansible.builtin.import_role:
+        name: packages
+        tasks_from: docker.yml
+      become: true
+
+    - ansible.builtin.import_role:
+        name: packages
+        tasks_from: caddy.yml
+      become: true
+
+    - ansible.builtin.import_role:
+        name: security
+        tasks_from: ssh.yml
+      become: true
+
+    - ansible.builtin.import_role:
+        name: security
+        tasks_from: firewall.yml
+      become: true
+
+    - ansible.builtin.import_role:
+        name: security
+        tasks_from: fail2ban.yml
+      become: true
+```
+
 ### Service Configuration
 
 In this section, we will focus on setting up different services running in Docker containers on our VPS. We will use Ansible to automate the service configuration process.
@@ -957,20 +1179,15 @@ docker_networks:
 
 The `group_vars` folder is a special directory that contains variables that apply to all hosts in the inventory. In this case, we define a list of Docker networks that we will use in our services.
 
-If you have multiple VPS hosts and want to define specific variables for each host, you can create a file with the host name in the `group_vars` directory. For example, if you have a host named `mycloud.com`, you can create a file named `mycloud.com.yml` in the `group_vars` directory with the host-specific variables. The variables defined in the host-specific file will override the variables defined in the `all.yml` file.
+If you have multiple VPS hosts and want to define specific variables for each host, you can create a file with the host name in the `group_vars` directory. For example, if you have a host named `mycloud.com`, you can create a file named `mycloud.com.yml` in the `group_vars` directory with the host-specific variables. 
+
+The variables defined in the host-specific file will override the variables defined in the `all.yml` file. The file `all.yml` is used to define variables that apply to all hosts in the inventory.
 
 Now, let's move on to configuring the services.
 
 #### Docker Networks
 
 Docker networks allow containers to communicate with each other securely. In this section, we will use Ansible to create Docker networks on our VPS.
-
-1. Create a new role named `docker` either using the `ansible-galaxy` command or manually:
-
-Manually:
-```bash
-mkdir -p roles/docker
-```
 
 2. Inside `roles/services/tasks/`, create a new file named `networks.yml` with the following content:
 
@@ -983,7 +1200,7 @@ mkdir -p roles/docker
   loop: "{{ docker_networks }}"
 ```
 
-3. Update the `site.yml` playbook to include the `docker` role:
+3. Update the `site.yml` playbook to import the `networks.yml` tasks:
 
 ```yaml
 ---
@@ -1011,6 +1228,50 @@ To check the Docker networks, you can use the following command:
 
 ```bash
 docker network ls
+```
+
+At this point, our `site.yml` playbook should look like this:
+
+```yaml
+---
+- name: Configure VPS
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    - ansible.builtin.import_role:
+        name: packages
+      become: true
+
+    - ansible.builtin.import_role:
+        name: packages
+        tasks_from: docker.yml
+      become: true
+
+    - ansible.builtin.import_role:
+        name: packages
+        tasks_from: caddy.yml
+      become: true
+
+    - ansible.builtin.import_role:
+        name: security
+        tasks_from: ssh.yml
+      become: true
+
+    - ansible.builtin.import_role:
+        name: security
+        tasks_from: firewall.yml
+      become: true
+
+    - ansible.builtin.import_role:
+        name: security
+        tasks_from: fail2ban.yml
+      become: true
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: networks.yml
 ```
 
 #### PostgreSQL Installation
@@ -1072,26 +1333,24 @@ PostgreSQL is a powerful, open-source relational database management system. In 
 2. Next step is to define the variables used in the `postgresql.yml` tasks. Update the `group_vars/all.yml` file with the following content:
 
 ```yaml
-
-# PostgreSQL Configuration
+# PostgreSQL Container Configuration
 postgres:
     data_volume: postgres_data
     container_name: postgres
     container_image: postgres:latest
     container_hostname: postgres
-
 ```
+
 For the `postgres_db_user` and `postgres_db_pass` variables, we will use the `secrets.yml` file to store the sensitive data.
 
 Edit the `secrets.yml` file using `ansible-vault edit secrets.yml` and add the following content:
 
 ```yaml 
----
 postgres_db_user: postgres
 postgres_db_pass: mysecretpassword
 ```
 
-3. Update the `site.yml` playbook to include the `services` role:
+3. Update the `site.yml` playbook to include the `postgresql` tasks:
 
 ```yaml
 ---
@@ -1123,7 +1382,7 @@ docker ps
 ```
 As we can see, our main playbook is getting bigger and bigger. To avoid running all the tasks every time we want to update a service, we can split the tasks into separate playbooks and include them in the main playbook.
 
-Let's create a two three new playbooks for each each type of configuration: `packages.yml`, `security.yml`, `services.yml`.
+Let's create three new playbooks for each each type of configuration: `packages.yml`, `security.yml`, `services.yml`.
 
 Create a new file named `packages.yml` in the root of your project directory with the following content:
 
@@ -1165,12 +1424,10 @@ Create a new file named `security.yml` in the root of your project directory wit
     - name: Force all notified handlers to run at this point, not waiting for normal sync points
       ansible.builtin.meta: flush_handlers
 
-    # For other tasks to be executed you need to tell Ansible what is the new port:
     - name: Update Ansible to use new SSH port
       ansible.builtin.set_fact:
         ansible_port: "{{ ssh_port }}"
-    # Thus, you can use the new port in the rest of the tasks
-    #
+
     - ansible.builtin.import_role:
         name: security
         tasks_from: firewall.yml
@@ -1232,5 +1489,4 @@ After updating the playbook, run it using the following command:
 ```bash
 ansible-playbook -i inventory.yml site.yml
 ```
-
 
