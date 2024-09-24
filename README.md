@@ -1280,6 +1280,13 @@ At this point, our `site.yml` playbook should look like this:
         tasks_from: ssh.yml
       become: true
 
+    - name: Force all notified handlers to run at this point
+      ansible.builtin.meta: flush_handlers
+
+    - name: Update Ansible to use new SSH port
+      ansible.builtin.set_fact:
+        ansible_port: "{{ ssh_port }}"
+
     - ansible.builtin.import_role:
         name: security
         tasks_from: firewall.yml
