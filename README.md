@@ -29,6 +29,7 @@ OmniOpenCon is a gathering of people, projects and communities involved in all t
         * [Fail2ban Configuration](#fail2ban-configuration)
     * [Service Configuration](#service-configuration)
         * [Docker Networks](#docker-networks)
+        * [PostgreSQL Installation](#postgresql-installation)
 * [Resources](#resources)
 * [Feedback](#feedback)
 
@@ -101,7 +102,8 @@ Let's start with a simple Ansible Playbook to print "Hello, World!". Create a ne
 
 ```yaml
 ---
-- hosts: localhost
+- name: Configure VPS 
+  hosts: localhost
   tasks:
     - name: Print Hello World
       ansible.builtin.debug:
@@ -138,7 +140,8 @@ After creating the inventory file, update the `site.yml` playbook to use the VPS
 
 ```yaml
 ---
-- hosts: vps
+- name: Configure VPS
+  hosts: vps
   tasks:
 
     - name: Print Hello World
@@ -215,7 +218,8 @@ Roles can be included in playbooks using the `roles` directive:
 
 ```yaml
 ---
-- hosts: localhost
+- name: Configure VPS
+  hosts: localhost
   roles:
     - role: <role_name>
 ```
@@ -225,7 +229,8 @@ Also you can import a role from a different directory:
 
 ```yaml
 ---
-- hosts: localhost
+- name: Configure VPS
+  hosts: localhost
   tasks:
     - import_role:
         name: /path/to/role
@@ -319,7 +324,8 @@ Using the `roles` directive:
 
 ```yaml
 ---
-- hosts: vps
+- name: Configure VPS
+  hosts: vps
   roles:
     - role: packages
 ```
@@ -334,8 +340,8 @@ Using the `import_role` task:
     # The other tasks are above
     - ansible.builtin.import_role:
         name: packages
-
 ```
+
 We will use the second option in this workshop.
 
 6. Run the playbook to install the required packages on your VPS:
@@ -349,7 +355,8 @@ Running the playbook in this form will fail. The reason is that we attempt to in
 
 ```yaml
 ---
-- hosts: vps
+- name: Configure VPS
+  hosts: vps
   tasks:
 
     - ansible.builtin.import_role:
@@ -475,7 +482,8 @@ Docker is a popular platform for developing, shipping, and running applications 
 
 ```yaml
 ---
-- hosts: vps
+- name: Configure VPS
+  hosts: vps
   tasks:
 
     - ansible.builtin.import_role:
@@ -522,7 +530,8 @@ Now, we need to reference the `secretes.yml` file in our `site.yml` playbook. We
 
 ```yaml
 ---
-- hosts: vps
+- name: Configure VPS
+  hosts: vps
   vars_files:
     - secrets.yml
   tasks:
@@ -634,7 +643,8 @@ Caddy is a powerful, extensible web server that can be used to serve static webs
 
 ```yaml
 ---
-- hosts: vps
+- name: Configure VPS
+  hosts: vps
   vars_files:
     - secrets.yml
   tasks:
@@ -758,7 +768,8 @@ However, if a task in playbook fails before the handler is triggered, the handle
 
 ```yaml
 ---
-- hosts: vps
+- name: Configure VPS
+  hosts: vps
   vars_files:
     - secrets.yml
   tasks:
@@ -822,7 +833,8 @@ A firewall is a network security system that monitors and controls incoming and 
 
 ```yaml
 ---
-- hosts: vps
+- name: Configure VPS
+  hosts: vps
   vars_files:
     - secrets.yml
   tasks:
@@ -888,7 +900,8 @@ Fail2ban is an intrusion prevention software framework that protects computer se
 
 ```yaml
 ---
-- hosts: vps
+- name: Configure VPS
+  hosts: vps
   vars_files:
     - secrets.yml
   tasks:
@@ -974,7 +987,8 @@ mkdir -p roles/docker
 
 ```yaml
 ---
-- hosts: vps
+- name: Configure VPS
+  hosts: vps
   vars_files:
     - secrets.yml
   tasks:
@@ -997,6 +1011,226 @@ To check the Docker networks, you can use the following command:
 
 ```bash
 docker network ls
+```
+
+#### PostgreSQL Installation
+
+PostgreSQL is a powerful, open-source relational database management system. In this section, we will use Ansible to install and configure PostgreSQL in a Docker container on our VPS.
+
+1. Inside `roles/services/tasks/`, create a new file named `postgresql.yml` with the following content:
+
+```yaml
+---
+- name: Create postgres volume
+  community.docker.docker_volume:
+    name: "{{ postgres['data_volume'] }}"
+
+- name: Create postgres container
+  community.docker.docker_container:
+    name: "{{ postgres['container_name'] }}"
+    image: "{{ postgres['container_image'] }}"
+    hostname: "{{ postgres['container_hostname'] }}"
+    restart_policy: unless-stopped
+    image_name_mismatch: recreate
+    recreate: true
+    env:
+      POSTGRES_USER: "{{ postgres_db_user }}"
+      POSTGRES_PASSWORD: "{{ postgres_db_pass }}"
+    exposed_ports:
+      - 5432
+    ports:
+      - "5432:5432"
+    networks:
+      - name: "{{ docker_networks[0].name }}"
+    volumes:
+      - "{{ postgres['data_volume'] }}:/var/lib/postgresql/data"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "{{ postgres_db_user }}"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+- name: Connect postgresql container to public network
+  community.docker.docker_network:
+    name: "{{ docker_networks[1].name }}"
+    connected:
+      - postgres
+    appends: true
+
+- name: Wait for PostgreSQL to become available
+  community.docker.docker_container_exec:
+    container: "{{ postgres['container_name'] }}"
+    command: bash -c "until pg_isready -U {{ postgres_db_user }}; do sleep 1; done"
+  register: result
+  until: result is succeeded
+  retries: 30
+  delay: 1
+    
+```
+
+2. Next step is to define the variables used in the `postgresql.yml` tasks. Update the `group_vars/all.yml` file with the following content:
+
+```yaml
+
+# PostgreSQL Configuration
+postgres:
+    data_volume: postgres_data
+    container_name: postgres
+    container_image: postgres:latest
+    container_hostname: postgres
+
+```
+For the `postgres_db_user` and `postgres_db_pass` variables, we will use the `secrets.yml` file to store the sensitive data.
+
+Edit the `secrets.yml` file using `ansible-vault edit secrets.yml` and add the following content:
+
+```yaml 
+---
+postgres_db_user: postgres
+postgres_db_pass: mysecretpassword
+```
+
+3. Update the `site.yml` playbook to include the `services` role:
+
+```yaml
+---
+- name: Configure VPS
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    # The other tasks are above
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: postgresql.yml
+```
+
+After updating the playbook, run it using the following command:
+
+```bash
+ansible-playbook -i inventory.yml site.yml
+```
+
+If the playbook runs successfully, PostgreSQL will be installed and configured in a Docker container on your VPS.
+
+To check the PostgreSQL container, you can use the following command:
+
+```bash
+docker ps
+```
+As we can see, our main playbook is getting bigger and bigger. To avoid running all the tasks every time we want to update a service, we can split the tasks into separate playbooks and include them in the main playbook.
+
+Let's create a two three new playbooks for each each type of configuration: `packages.yml`, `security.yml`, `services.yml`.
+
+Create a new file named `packages.yml` in the root of your project directory with the following content:
+
+```yaml
+---
+- name: Configure VPS Packages
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  become: true
+  tasks:
+
+    - ansible.builtin.import_role:
+        name: packages
+
+    - ansible.builtin.import_role:
+        name: packages
+        tasks_from: docker.yml
+
+    - ansible.builtin.import_role:
+        name: packages
+        tasks_from: caddy.yml
+```
+
+Create a new file named `security.yml` in the root of your project directory with the following content:
+
+```yaml
+- name: Configure VPS Security
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  become: true
+  tasks:
+
+    - ansible.builtin.import_role:
+        name: security
+        tasks_from: ssh.yml
+
+    - name: Force all notified handlers to run at this point, not waiting for normal sync points
+      ansible.builtin.meta: flush_handlers
+
+    # For other tasks to be executed you need to tell Ansible what is the new port:
+    - name: Update Ansible to use new SSH port
+      ansible.builtin.set_fact:
+        ansible_port: "{{ ssh_port }}"
+    # Thus, you can use the new port in the rest of the tasks
+    #
+    - ansible.builtin.import_role:
+        name: security
+        tasks_from: firewall.yml
+
+    - ansible.builtin.import_role:
+        name: security
+        tasks_from: fail2ban.yml
+```
+
+Create a new file named `services.yml` in the root of your project directory with the following content:
+
+```yaml
+---
+- name: Configure VPS Services
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: networks.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: postgresql.yml
+```
+
+Now, update the `site.yml` playbook to include the new playbooks:
+
+```yaml
+---
+- name: Configure VPS
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    - name: Print Hello World 
+      ansible.builtin.debug:
+        msg: "Hello, World!"
+
+    - name: Ping
+      ansible.builtin.ping:
+
+- name: Install packages
+  ansible.builtin.import_playbook: packages.yml
+
+- name: Configure security
+  ansible.builtin.import_playbook: security.yml
+
+- name: Configure services
+  ansible.builtin.import_playbook: services.yml
+
+```
+
+After updating the playbook, run it using the following command:
+
+```bash
+ansible-playbook -i inventory.yml site.yml
 ```
 
 
