@@ -28,6 +28,7 @@ OmniOpenCon is a gathering of people, projects and communities involved in all t
         * [Firewall Configuration](#firewall-configuration)
         * [Fail2ban Configuration](#fail2ban-configuration)
     * [Service Configuration](#service-configuration)
+        * [Docker Networks](#docker-networks)
 * [Resources](#resources)
 * [Feedback](#feedback)
 
@@ -919,7 +920,83 @@ Below are some useful commands to manage Fail2ban:
 - `fail2ban-client set <jail_name> unbanip <ip_address>`: Unbans an IP address from a jail.
 - `fail2ban-client reload`: Reloads the Fail2ban configuration.
 
+### Service Configuration
 
+In this section, we will focus on setting up different services running in Docker containers on our VPS. We will use Ansible to automate the service configuration process.
 
+Before we start, we need to think about managing our docker containers configuration, and in order to not repeat ourselves, we can use Ansible variables to store the configuration of our containers. This way, we can easily update the configuration in one place and have it applied to all the containers.
+
+1. Create a new folder named `group_vars` in your project directory:
+
+```bash
+mkdir group_vars
+```
+2. Inside the `group_vars` directory, create a new file named `all.yml` with the following content:
+
+```yaml
+---
+docker_networks:
+  - name: public
+    driver: bridge
+  - name: private
+    driver: bridge
+```
+
+The `group_vars` folder is a special directory that contains variables that apply to all hosts in the inventory. In this case, we define a list of Docker networks that we will use in our services.
+
+If you have multiple VPS hosts and want to define specific variables for each host, you can create a file with the host name in the `group_vars` directory. For example, if you have a host named `mycloud.com`, you can create a file named `mycloud.com.yml` in the `group_vars` directory with the host-specific variables. The variables defined in the host-specific file will override the variables defined in the `all.yml` file.
+
+Now, let's move on to configuring the services.
+
+#### Docker Networks
+
+Docker networks allow containers to communicate with each other securely. In this section, we will use Ansible to create Docker networks on our VPS.
+
+1. Create a new role named `docker` either using the `ansible-galaxy` command or manually:
+
+Manually:
+```bash
+mkdir -p roles/docker
+```
+
+2. Inside `roles/services/tasks/`, create a new file named `networks.yml` with the following content:
+
+```yaml
+---
+- name: Create Docker networks
+  ansible.builtin.docker_network:
+    name: "{{ item.name }}"
+    driver: "{{ item.driver }}"
+  loop: "{{ docker_networks }}"
+```
+
+3. Update the `site.yml` playbook to include the `docker` role:
+
+```yaml
+---
+- hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    # The other tasks are above
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: networks.yml
+```
+
+After updating the playbook, run it using the following command:
+
+```bash
+ansible-playbook -i inventory.yml site.yml
+```
+
+If the playbook runs successfully, the Docker networks will be created on your VPS.
+To check the Docker networks, you can use the following command:
+
+```bash
+docker network ls
+```
 
 
