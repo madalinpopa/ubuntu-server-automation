@@ -10,6 +10,7 @@ This repository provides a comprehensive guide to create an Ansible project and 
     * [Generate SSH Key Pair](#generate-ssh-key-pair)
     * [Ansible Installation](#ansible-installation)
     * [Basic Linux Commands](#basic-linux-commands)
+    * [DNS Configuration Example](#dns-configuration-example)
 * [Ansible Project Setup](#ansible-project-setup)
     * [Ansible "Hello World"](#ansible-hello-world)
     * [Ansible Inventory](#ansible-inventory)
@@ -86,6 +87,18 @@ If you don’t have Ansible installed on your local machine, you can follow our 
 ### Basic Linux Commands
 
 If you are new to Linux commands, you can refer to our [Basic Linux Commands Guide](./docs/linux-basic.md) for a quick overview.
+
+### DNS Configuration Example
+
+You will need to create the following DNS records:
+
+- **A Record**: Points your domain to your VPS public IP.
+
+  Example:  example.com -> 123.45.67.89 (your VPS public IP)
+
+- **CNAME Record**: Points a subdomain to your domain.
+
+    Example:  www.example.com -> example.com
 
 ## Ansible Project Setup 
 
