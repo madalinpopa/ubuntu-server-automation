@@ -1,4 +1,4 @@
-# OmniOpenCon 2024
+# Ubuntu Server Setup with Ansible: Automated Provisioning & Configuration
 
 OmniOpenCon is a gathering of people, projects and communities involved in all things open: open source, open data, open science, open hardware, open education. We value openness, freedom and sharing and we want to bring together all who share these beliefs.
 
