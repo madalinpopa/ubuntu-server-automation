@@ -2,9 +2,9 @@
 
 This repository provides a comprehensive guide to create an Ansible project and playbooks to automate the provisioning and configuration of an Ubuntu server. Whether you're setting up a cloud VPS or a local server, the included Ansible roles will install and configure essential services like Docker, Caddy for reverse proxying, Fail2Ban for security, and more. Designed for developers and system administrators, this setup simplifies server management and automates best practices for secure, scalable infrastructure.
 
-## 📌 Table of Contents
+## Table of Contents
 
-* [Abstract](#📌-abstract)
+* [Abstract](#abstract)
 * [Prerequisites](#prerequisites)
     * [VPS Setup](#vps-setup)
     * [Generate SSH Key Pair](#generate-ssh-key-pair)
@@ -32,7 +32,7 @@ This repository provides a comprehensive guide to create an Ansible project and 
 * [Feedback](#feedback)
 
 
-## 📌 Abstract
+## Abstract
 
 Welcome to the **Ubuntu Server Setup with Ansible** project, a comprehensive guide to automating the process of setting up and configuring an Ubuntu server from scratch using Ansible.
 
@@ -51,7 +51,7 @@ This project is designed to minimize manual setup and centralize configuration m
 
 Let's dive into automation and build a more efficient, scalable infrastructure!
 
-## 📌 Prerequisites
+## Prerequisites
 
 Before diving into the automation process, make sure you have the following:
 
@@ -80,7 +80,7 @@ If you don’t have Ansible installed on your local machine, you can follow our 
 
 If you are new to Linux commands, you can refer to our [Basic Linux Commands Guide](./docs/linux-basic.md) for a quick overview.
 
-## 📌 Ansible Project Setup 
+## Ansible Project Setup 
 
 Now that you have your VPS set up and Ansible installed, let’s start with the Ansible configuration. We will create a new Ansible project to hold our playbooks and configurations.
 
@@ -236,7 +236,7 @@ Also you can import a role from a different directory:
 
 In this guide, we will create different roles to organize our playbooks and tasks. Typically, a role is created for each service or component you want to configure. According to the Ansible documentation, a role should be a self-contained collection of variables, tasks, files, templates, and modules that can be reused to configure a specific component or service.
 
-## 📌 Server Configuration
+## Server Configuration
 
 Now that we have our Ansible project set up, let's move on to configuring our VPS. We will focus on the following areas:
 
