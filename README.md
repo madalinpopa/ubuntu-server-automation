@@ -265,6 +265,7 @@ ansible-galaxy init roles/packages
 Manually:
 ```bash
 mkdir -p roles/packages
+mkdir -p roles/packages/tasks
 ```
 
 3. Inside `roles/packages/tasks/`, create a new file named `apt.yml` with the following content:
