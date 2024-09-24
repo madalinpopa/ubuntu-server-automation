@@ -2,7 +2,7 @@
 
 This repository provides a comprehensive guide to create an Ansible project and playbooks to automate the provisioning and configuration of an Ubuntu server. Whether you're setting up a cloud VPS or a local server, the included Ansible roles will install and configure essential services like Docker, Caddy for reverse proxying, Fail2Ban for security, and more. Designed for developers and system administrators, this setup simplifies server management and automates best practices for secure, scalable infrastructure.
 
-## Table of Contents
+## 📌 Table of Contents
 
 * [Abstract](#abstract)
 * [Prerequisites](#prerequisites)
@@ -32,7 +32,7 @@ This repository provides a comprehensive guide to create an Ansible project and 
 * [Feedback](#feedback)
 
 
-## Abstract
+## 📌 Abstract
 
 Welcome to the **Ubuntu Server Setup with Ansible** project, a comprehensive guide to automating the process of setting up and configuring an Ubuntu server from scratch using Ansible.
 
