@@ -347,7 +347,7 @@ We will use the second option in this guide.
 ```bash
 ansible-playbook -i inventory.yml site.yml
 ```
-Running the playbook in this form will fail. The reason is that we attempt to install packages with our regular user, which does not have the necessary permissions. To fix this, we need to tell Ansible to run the tasks with elevated privileges. We can do this by enabling privilege escalation for our import role task.
+Running the playbook in this form **will fail**. The reason is that we attempt to install packages with our regular user, which does not have the necessary permissions. To fix this, we need to tell Ansible to run the tasks with elevated privileges. We can do this by enabling privilege escalation for our import role task.
 
 7. Update the `site.yml` playbook to enable privilege escalation:
 
