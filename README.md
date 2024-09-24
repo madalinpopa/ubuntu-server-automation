@@ -34,20 +34,22 @@ This repository provides a comprehensive guide to create an Ansible project and 
 
 ## Abstract
 
-Welcome to OmniOpenCon 2024 and this workshop titled “From Zero to DevOps Cloud: Ansible-Driven VPS Setup for Development.”
+Welcome to the **Ubuntu Server Setup with Ansible** project, a comprehensive guide to automating the process of setting up and configuring an Ubuntu server from scratch using Ansible.
 
-This is a hands-on workshop part of OmniOpenCon 2024, where we will explore how to automate the process of setting up a Virtual Private Server (VPS) from scratch using Ansible. We will focus on leveraging Ansible to handle all the configuration tasks that typically require manual intervention, including security setup, package installations, and service configurations.
+Originally developed as part of OmniOpenCon 2024, this project has evolved into a powerful resource for developers, system administrators, and DevOps engineers looking to automate server provisioning. We leverage Ansible to handle all tasks that typically require manual intervention, including security configurations, package installations, and service setups.
 
-By the end of this workshop, you will have a fully automated VPS setup for development purposes, using Ansible playbooks. You will also learn how to deploy services like Docker to run your development environments and set up secure access to your VPS and services using a VPN.
+By following this guide, you will:
 
-- Understand the basics of Ansible and its role in automating infrastructure setup.
-- Learn how to write Ansible playbooks to define the desired state of your VPS.
-- Apply your knowledge to create a fully automated VPS setup for development purposes.
-- Have a fully configured VPS for development, using Ansible playbooks.
-- Deploy services like Docker to run your development environments.
-- Set up secure access to your VPS and services using a VPN.
+- Gain a clear understanding of Ansible's role in automating infrastructure setup.
+- Learn how to write Ansible playbooks to define the desired state of your Ubuntu server.
+- Set up a fully automated VPS environment, tailored for development and production use cases.
+- Deploy services like Docker to run your applications in isolated environments.
+- Implement secure access to your VPS and private services using a VPN (via Dockovpn).
+- Use Caddy as a reverse proxy to manage both public and private services.
 
-This workshop is designed to minimize manual setup and centralize configuration management within Ansible, allowing you to create reproducible, scalable infrastructure deployments. Let’s dive into automation and simplify your DevOps workflow!
+This project is designed to minimize manual setup and centralize configuration management within Ansible, allowing for reproducible, scalable infrastructure deployments. Whether you're setting up a cloud VPS or a local server, this project aims to streamline your DevOps workflow.
+
+Let's dive into automation and build a more efficient, scalable infrastructure!
 
 ## Prerequisites
 
