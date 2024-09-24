@@ -55,14 +55,21 @@ Let's dive into automation and build a more efficient, scalable infrastructure!
 
 Before diving into the automation process, make sure you have the following:
 
-* A VPS (Virtual Private Server) with root access. 
-  * You can use any cloud provider like AWS, DigitalOcean, Linode, or a local VPS provider.
-  * SSH access to your VPS.
-* Local Environment Setup:
-  * Ansible installed on your local machine.
-  * SSH key pair for secure access to your VPS.
-  * Basic knowledge of Linux commands and system administration.
-  * A text editor like VS Code or Vim.
+1. **A VPS (Virtual Private Server) with root access.** 
+   - You can use any cloud provider like AWS, DigitalOcean, Linode, or a local VPS provider.
+   - SSH access to your VPS.
+
+2. **Local Environment Setup:**
+   - Ansible installed on your local machine.
+   - SSH key pair for secure access to your VPS.
+   - Basic knowledge of Linux commands and system administration.
+   - A text editor like VS Code or Vim.
+
+3. **Domain Name & DNS Access:**
+   - A registered domain name that you control.
+   - Access to manage the domain’s DNS records (e.g., via your registrar or a DNS management service like Cloudflare).
+   - You will need to set up an A or CNAME record pointing to your VPS’s public IP address.
+   - The domain will be used to set up SSL certificates and access public services.
 
 ### VPS Setup
 
