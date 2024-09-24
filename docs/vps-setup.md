@@ -41,15 +41,13 @@ When setting up a VPS, it's important to consider disk encryption, especially if
 
 Here are some popular VPS providers that offer a wide range of services and features:
 
-1. **Chroot.ro**: chroot.ro offers VPS hosting with full root access and a variety of operating systems to choose from. This will be the provider we use for the workshop.
+1. **DigitalOcean**: Known for its simplicity and user-friendly interface, DigitalOcean offers a variety of droplet plans to suit different needs.
 
-2. **DigitalOcean**: Known for its simplicity and user-friendly interface, DigitalOcean offers a variety of droplet plans to suit different needs.
+2. **Linode**: Linode provides high-performance SSD Linux servers with a simple pricing model and excellent customer support.
 
-3. **Linode**: Linode provides high-performance SSD Linux servers with a simple pricing model and excellent customer support.
+3. **Vultr**: Vultr offers high-performance cloud compute instances with SSD storage and a global network of data centers.
 
-4. **Vultr**: Vultr offers high-performance cloud compute instances with SSD storage and a global network of data centers.
-
-5. **hostinger**: hostinger provides affordable VPS hosting with dedicated resources and a user-friendly control panel.
+4. **hostinger**: hostinger provides affordable VPS hosting with dedicated resources and a user-friendly control panel.
 
 
 ## Official Linux Distribution Websites
