@@ -26,7 +26,7 @@ To generate an SSH key pair, follow these steps:
     ssh-keygen -t ed25519 -C "your_email@example.com"
     ```
 
-3. You will be prompted to choose a location to save the key pair. Press `Enter` to save the key pair in the default location (`~/.ssh/ed25519`).
+3. You will be prompted to choose a location to save the key pair. Press `Enter` to save the key pair in the default location (`~/.ssh/id_ed25519`).
 
 4. You will also be prompted to enter a passphrase to secure your private key. You can choose to set a passphrase or leave it empty for no passphrase.
 
@@ -47,8 +47,8 @@ Create a `config` file in the `~/.ssh` directory to store the SSH key configurat
    ```
     Host mycloud.com
          HostName <vps_ip>
-         IdentitiesOnly yes
          User <username>
+         IdentitiesOnly yes
     ```
 
 ## Copying the Public Key to Your VPS
