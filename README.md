@@ -29,6 +29,7 @@ This repository provides a comprehensive guide to create an Ansible project and 
     * [Service Configuration](#service-configuration)
         * [Docker Networks](#docker-networks)
         * [PostgreSQL Installation](#postgresql-installation)
+        * [PgAdmin Installation](#pgadmin-installation)
 * [Resources](#resources)
 * [Feedback](#feedback)
 
@@ -681,13 +682,13 @@ Caddy is a powerful, extensible web server that can be used to serve static webs
 2. Now, we will create a basic Caddy configuration file. Create a new file named `Caddyfile.j2` in the `roles/packages/templates/` directory with the following content:
 
 ```jinja
-:80 {
+<your_domain> {
     root * /var/www/html
     file_server
 }
 ```
 
-This configuration file defines a simple Caddy server that serves files from the `/var/www/html` directory on port 80. The `:80` directive specifies that the server listens on port 80 on all interfaces.
+This configuration file defines a simple Caddy server that serves files from the `/var/www/html` directory. 
 
 3. Let's create a simple HTML file to serve using Caddy. Create a new file named `index.html` in the `roles/packages/files/` directory with the following content:
 
@@ -1352,12 +1353,10 @@ PostgreSQL is a powerful, open-source relational database management system. In 
     env:
       POSTGRES_USER: "{{ postgres_db_user }}"
       POSTGRES_PASSWORD: "{{ postgres_db_pass }}"
-    exposed_ports:
-      - 5432
     ports:
       - "5432:5432"
     networks:
-      - name: "{{ docker_networks[0].name }}"
+      - name: "{{ postgres['network'] }}"
     volumes:
       - "{{ postgres['data_volume'] }}:/var/lib/postgresql/data"
     healthcheck:
@@ -1369,7 +1368,7 @@ PostgreSQL is a powerful, open-source relational database management system. In 
 
 - name: Connect postgresql container to public network
   community.docker.docker_network:
-    name: "{{ docker_networks[1].name }}"
+    name: "{{ docker_networks[0].name }}"
     connected:
       - postgres
     appends: true
@@ -1394,6 +1393,7 @@ postgres:
     container_name: postgres
     container_image: postgres:latest
     container_hostname: postgres
+    network: private
 ```
 
 For the `postgres_db_user` and `postgres_db_pass` variables, we will use the `secrets.yml` file to store the sensitive data.
@@ -1544,4 +1544,174 @@ After updating the playbook, run it using the following command:
 ```bash
 ansible-playbook -i inventory.yml site.yml
 ```
+
+#### PgAdmin Installation
+
+PgAdmin is a popular open-source administration and development platform for PostgreSQL. In this section, we will use Ansible to install and configure PgAdmin in a Docker container on our VPS.
+
+1. Inside `roles/services/tasks/`, create a new file named `pgadmin.yml` with the following content:
+
+```yaml
+---
+- name: Create pgadmin volume
+  community.docker.docker_volume:
+    name: "{{ pgadmin['data_volume'] }}"
+
+- name: Create pgadmin container
+  community.docker.docker_container:
+    name: "{{ pgadmin['container_name'] }}"
+    image: "{{ pgadmin['container_image'] }}"
+    hostname: "{{ pgadmin['container_hostname'] }}"
+    restart_policy: unless-stopped
+    recreate: true
+    env:
+      PGADMIN_DEFAULT_EMAIL: "{{ pgadmin_email }}"
+      PGADMIN_DEFAULT_PASSWORD: "{{ pgadmin_password }}"
+    ports:
+        - "8081:80"
+    networks:
+      - name: "{{ pgadmin['network'] }}"
+    volumes:
+      - "{{ pgadmin['data_volume'] }}:/var/lib/pgadmin"
+```
+
+2. Next step is to define the variables used in the `pgadmin.yml` tasks. Update the `group_vars/all.yml` file with the following content:
+
+```yaml
+# PgAdmin Container Configuration
+pgadmin:
+    data_volume: pgadmin_data
+    container_image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    container_hostname: pgadmin
+    network: private
+```
+
+For the `pgadmin_email` and `pgadmin_password` variables, we will use the `secrets.yml` file to store the sensitive data.
+
+Edit the `secrets.yml` file using `ansible-vault edit secrets.yml` and add the following content:
+
+```yaml
+pgadmin_email: your@email.com
+pgadmin_password: secret
+```
+
+3. Update the `services.yml` playbook to include the `pgadmin` tasks:
+
+```yaml
+---
+- name: Configure VPS Services
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    # The other tasks are above
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: pgadmin.yml
+```
+
+After updating the playbook, run it using the following command:
+
+```bash
+ansible-playbook -i inventory.yml services.yml
+```
+
+If the playbook runs successfully, PgAdmin will be installed and configured in a Docker container on your VPS.
+
+To access PgAdmin, you can use the following URL in your web browser:
+
+```bash
+http://<vps_ip_or_domain>
+```
+
+You can log in using the email and password defined in the `secrets.yml` file.
+
+
+|🎯 At this point, our `services.yml` playbook should look like this|
+|---------------------------------------------------------------|
+
+```yaml
+---
+- name: Configure VPS Services
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: networks.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: postgresql.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: pgadmin.yml
+```
+
+Now, we want to access the PgAdmin interface using a domain name instead of an IP address. To do this, we need to configure Caddy to act as a reverse proxy for the PgAdmin container.
+
+1. Update the `Caddyfile.j2` template file to include a reverse proxy configuration for PgAdmin:
+
+```jinja
+<your_domain> {
+    root * /var/www/html
+    file_server
+}
+
+pgadmin.<your_domain> {
+    reverse_proxy localhost:8081 {
+        header_up X-Scheme {scheme}
+    }
+}
+```
+
+2. After updating the `Caddyfile.j2` template file, run the `site.yml` playbook to apply the changes:
+
+```bash
+ansible-playbook -i inventory.yml site.yml
+```
+
+If the playbook runs successfully, Caddy will be configured to act as a reverse proxy for the PgAdmin container.
+
+To access PgAdmin using the domain name, you can use the following URL in your web browser:
+
+```bash
+http://pgadmin.<your_domain>
+```
+
+
+|🎯 At this point, our `service.yml` playbook should look like this|
+|---------------------------------------------------------------|
+
+```yaml
+---
+- name: Configure VPS Services
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: networks.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: postgresql.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: pgadmin.yml
+```
+
+
+
+
+
 
