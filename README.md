@@ -22,6 +22,7 @@ OmniOpenCon is a gathering of people, projects and communities involved in all t
     * [Package Installation](#package-installation)
         * [Common Packages](#common-packages)
         * [Docker Installation](#docker-installation)
+        * [Caddy Installation](#caddy-installation)
     * [Security Setup](#security-setup)
         * [SSH Configuration](#ssh-configuration)
         * [Firewall Configuration](#firewall-configuration)
@@ -95,7 +96,7 @@ cd ansible-project
 
 ### Ansible "Hello World"
 
-Let's start with a simple Ansible Playbook to print "Hello, World!" and to check the connection with your VPS. Create a new file named `site.yml` in your project directory with the following content:
+Let's start with a simple Ansible Playbook to print "Hello, World!". Create a new file named `site.yml` in your project directory with the following content:
 
 ```yaml
 ---
@@ -165,8 +166,6 @@ interpreter_python=auto_silent
 [inventory]
 inventory_unparsed_warning = False
 
-[privilege_escalation]
-become_ask_pass = true
 ```
 This configuration file disables the warning for using `localhost` as the target host, sets the path to the vault password file, and disables the warning for unparsed inventory files. It also sets the Python interpreter to auto-detect and disables the prompt for privilege escalation password.
 
@@ -285,6 +284,8 @@ mkdir -p roles/packages
 - name: Install required packages
   ansible.builtin.apt:
     pkg:
+    - debian-keyring            # Debian keyring
+    - debian-archive-keyring    # Debian archive keyring
     - build-essential           # Development tools
     - bash-completion           # Bash completion
     - apt-transport-https       # HTTPS support for APT
@@ -536,6 +537,114 @@ After updating the playbook, run it using the following command:
 ansible-playbook -i inventory.yml site.yml
 ```
 This way, you can securely store and manage sensitive data in your Ansible playbooks using Ansible Vault.
+
+#### Caddy Installation
+
+Caddy is a powerful, extensible web server that can be used to serve static websites, reverse proxy services, and more. In this section, we will use Ansible to install Caddy on our VPS.
+
+1. Create a new file named `caddy.yml` in the `roles/packages/tasks/` directory with the following content:
+
+```yaml
+---
+- name: Add Caddy GPG apt Key
+  vars:
+    keyrings: /usr/share/keyrings
+    apt_repo: https://dl.cloudsmith.io/public/caddy/testing/deb/debian  
+  block:
+    - name: Download Caddy gpg key
+      ansible.builtin.get_url:
+        url: https://dl.cloudsmith.io/public/caddy/stable/gpg.key        
+        dest: "{{ keyrings }}/caddy-stable-archive-keyring.asc"
+
+
+    - name: Add Caddy apt repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by={{ keyrings }}/caddy-stable-archive-keyring.asc] {{ apt_repo }} any-version main"
+        state: present
+
+    - name: Add Caddy source repository
+      ansible.builtin.apt_repository:
+        repo: "deb-src [signed-by={{ keyrings }}/caddy-stable-archive-keyring.asc] {{ apt_repo }} any-version main"
+        state: present
+
+- name: Install Caddy package
+  ansible.builtin.package:
+    name: caddy
+    state: present
+
+- name: Enable caddy service
+  ansible.builtin.service:
+    name: caddy.service
+    enabled: yes
+
+- name: Create Caddy configuration file
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: /etc/caddy/Caddyfile
+  notify: restart_caddy
+
+- name: Create Caddy web root directory
+  ansible.builtin.file:
+    path: /var/www/html
+    state: directory
+    mode: '0755'
+
+- name: Copy index.html file
+    ansible.builtin.copy:
+        src: index.html
+        dest: /var/www/html/index.html
+
+```
+
+2. Now, we will create a basic Caddy configuration file. Create a new file named `Caddyfile.j2` in the `roles/packages/templates/` directory with the following content:
+
+```jinja
+:80 {
+    root * /var/www/html
+    file_server
+}
+```
+3. Let's create a simple HTML file to serve using Caddy. Create a new file named `index.html` in the `roles/packages/files/` directory with the following content:
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Welcome to Caddy</title>
+</head>
+<body>
+    <h1>Welcome to Caddy</h1>
+    <p>This is a test page served by Caddy.</p>
+</body>
+</html>
+```
+4. Create a new file `main.yml` in the `roles/packages/handlers/` directory with the following content:
+
+```yaml
+---
+- name: restart_caddy
+  become: true
+  ansible.builtin.systemd_service:
+    name: caddy
+    state: reloaded
+```
+
+5. Update the `site.yml` playbook to include the `caddy` role:
+
+```yaml
+---
+- hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    # The other tasks are above
+
+    - ansible.builtin.import_role:
+        name: packages
+        tasks_from: caddy.yml
+      become: true
+```
 
 ### Security Setup
 
