@@ -578,7 +578,8 @@ ansible-playbook -i inventory.yml site.yml
 ```
 This way, you can securely store and manage sensitive data in your Ansible playbooks using Ansible Vault.
 
-At this point, our `site.yml` playbook should look like this:
+|🎯 At this point, our `site.yml` playbook should look like this|
+|---------------------------------------------------------------|
 
 ```yaml
 ---
@@ -720,7 +721,8 @@ This is an Ansible handler that reloads the Caddy service after the configuratio
 ansible-playbook -i inventory.yml site.yml
 ```
 
-At this point our `site.yml` playbook should look like this:
+|🎯 At this point, our `site.yml` playbook should look like this|
+|---------------------------------------------------------------|
 
 ```yaml
 ---
@@ -898,7 +900,8 @@ The first task, `meta: flush_handlers`, forces all notified handlers to run at t
 
 The second task updates the Ansible port to use the new SSH port defined in the `secrets.yml` file. This allows Ansible to use the new port for SSH connections in subsequent tasks.
 
-At this point, our `site.yml` playbook should look like this:
+|🎯 At this point, our `site.yml` playbook should look like this|
+|---------------------------------------------------------------|
 
 ```yaml
 ---
@@ -1008,7 +1011,8 @@ Below are some useful commands to manage UFW:
 - `ufw delete <rule_number>`: Deletes a specific rule from the UFW configuration.
 - `ufw reload`: Reloads the UFW configuration.
 
-At this point, our `site.yml` playbook should look like this:
+|🎯 At this point, our `site.yml` playbook should look like this|
+|---------------------------------------------------------------|
 
 ```yaml
 ---
@@ -1130,7 +1134,8 @@ Below are some useful commands to manage Fail2ban:
 - `fail2ban-client set <jail_name> unbanip <ip_address>`: Unbans an IP address from a jail.
 - `fail2ban-client reload`: Reloads the Fail2ban configuration.
 
-At this point, our `site.yml` playbook should look like this:
+|🎯 At this point, our `site.yml` playbook should look like this|
+|---------------------------------------------------------------|
 
 ```yaml
 ---
@@ -1252,7 +1257,8 @@ To check the Docker networks, you can use the following command:
 docker network ls
 ```
 
-At this point, our `site.yml` playbook should look like this:
+|🎯 At this point, our `site.yml` playbook should look like this|
+|---------------------------------------------------------------|
 
 ```yaml
 ---
