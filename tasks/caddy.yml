@@ -43,6 +43,6 @@
     mode: '0755'
 
 - name: Copy index.html file
-    ansible.builtin.copy:
-        src: index.html
-        dest: /var/www/html/index.html
+  ansible.builtin.copy:
+    src: index.html
+    dest: /var/www/html/index.html
