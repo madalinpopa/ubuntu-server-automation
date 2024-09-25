@@ -1581,7 +1581,7 @@ ansible-playbook -i inventory.yml services.yml
 ```bash
 https://gitea.<your_domain>
 ```
-When we access Gitea for the first time, we need to configure the instance settings. You don't have to change anything in the database settings, because we already configured them in the `gitea.yml` tasks. All that you have to do here is to create the admin user in `Admin Account Settings` section. This is required because by default we deactivate the user registration.
+When we access Gitea for the first time, we need to configure the instance settings. You don't have to change anything in the database settings, because we already configured them in the `gitea.yml` tasks. All that you have to do here is to create the admin user in `Admin Account Settings` section. This is required because by default we disabled the user registration.
 
 |🎯 At this point, our `service.yml` playbook should look like this|
 |------------------------------------------------------------------|
