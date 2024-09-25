@@ -436,7 +436,7 @@ This file contains the Docker daemon configuration settings. In this example, we
     name: docker
     state: restarted
 ```
-This is an Ansible handler that restarts the Docker service after the configuration changes have been applied.
+This is an Ansible **handler** that restarts the Docker service after the configuration changes have been applied.
 
 A handler is a task that is triggered by other tasks. Handlers are only executed once at the end of the play, after all the tasks have been completed.
 
