@@ -1192,13 +1192,8 @@ After updating the playbook, run it using the following command:
 ansible-playbook -i inventory.yml site.yml
 ```
 
-If the playbook runs successfully, PostgreSQL will be installed and configured in a Docker container on your VPS.
+🎉 If the playbook runs successfully, PostgreSQL will be installed and configured in a Docker container on your VPS.
 
-To check the PostgreSQL container, you can use the following command:
-
-```bash
-docker ps
-```
 As we can see, our main playbook is getting bigger and bigger. To avoid running all the tasks every time we want to update a service, we can split the tasks into separate playbooks and include them in the main playbook.
 
 Let's create three new playbooks for each each type of configuration: `packages.yml`, `security.yml`, `services.yml`.
@@ -1229,6 +1224,7 @@ Create a new file named `packages.yml` in the root of your project directory wit
 Create a new file named `security.yml` in the root of your project directory with the following content:
 
 ```yaml
+---
 - name: Configure VPS Security
   hosts: vps
   vars_files:
@@ -1239,13 +1235,6 @@ Create a new file named `security.yml` in the root of your project directory wit
     - ansible.builtin.import_role:
         name: security
         tasks_from: ssh.yml
-
-    - name: Force all notified handlers to run at this point
-      ansible.builtin.meta: flush_handlers
-
-    - name: Update Ansible to use new SSH port
-      ansible.builtin.set_fact:
-        ansible_port: "{{ ssh_port }}"
 
     - ansible.builtin.import_role:
         name: security
