@@ -230,7 +230,7 @@ A list with all the Ansible modules can be found [here](https://docs.ansible.com
 
 In Ansible we have also this notion of `Collections`. Collections are a distribution format for Ansible content that can include playbooks, roles, modules, and plugins. Collections make it easier to share and reuse Ansible content.
 
-When you install Ansible, you get a set of built-in modules that are part of the `ansible.builtin` collection. You can use these modules in your playbooks without any additional configuration. Also, by default ansible will install for you the some of the `community` collections.
+When you install Ansible, you get a set of built-in modules that are part of the `ansible.builtin` collection. You can use these modules in your playbooks without any additional configuration. Also, by default ansible will come with some of the `community` collections.
 
 A list of all the community collections can be found [here](https://docs.ansible.com/ansible/latest/collections/community/index.html).
 
