@@ -387,6 +387,13 @@ If the playbook runs successfully, you should see the required packages installe
   hosts: vps
   tasks:
 
+    - name: Print Hello World
+      ansible.builtin.debug:
+        msg: "Hello, World!"
+
+    - name: Ping
+      ansible.builtin.ping:
+
     - ansible.builtin.import_role:
         name: packages
       become: true
