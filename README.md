@@ -97,9 +97,21 @@ You will need to create the following DNS records:
 
   Example:  example.com -> 123.45.67.89 (your VPS public IP)
 
-- **CNAME Record**: Points a subdomain to your domain.
+- **CNAME Records**: Points subdomains to your domain.
 
-    Example:  www.example.com -> example.com
+  Example:  www.example.com -> example.com
+
+As we will have multiple services running on our VPS, it's a good practice to use subdomains for each service. Therefore, you can create in advance the following subdomains CNAME records:
+
+- **pgadmin**.example.com -> example.com
+- **gitea**.example.com -> example.com
+- **umami**.example.com -> example.com
+- **yacht**.example.com -> example.com
+- **notify**.example.com -> example.com
+- **memo**.example.com -> example.com
+- **semaphore**.example.com -> example.com
+
+Althoug we can use `*` to create a wildcard record, it's better to create a CNAME record for each subdomain you want to use.
 
 ## Ansible Project Setup 
 
