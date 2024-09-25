@@ -336,8 +336,6 @@ mkdir -p roles/packages/tasks
         name: packages
 ```
 
-We will use the second option in this guide.
-
 6. Run the playbook to install the required packages on your VPS:
 
 ```bash
