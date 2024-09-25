@@ -222,7 +222,9 @@ Usually is best to have the configuration file in your home directory if you don
 
 ### Ansible Playbooks
 
-Ansible playbooks are YAML files that define a set of tasks to be executed on the target hosts. Playbooks can include multiple plays, each targeting different hosts or groups of hosts. Each play consists of tasks that define the actions to be performed on the target hosts.
+Ansible playbooks are YAML files that define a set of tasks to be executed on the target hosts. Playbooks can include multiple plays, each targeting different hosts or groups of hosts. Each play consists of tasks of modules that define the actions to be performed on the target hosts.
+
+An Ansible module is a reusable, standalone script that performs specific tasks on the target hosts. Modules can be used to manage files, install packages, configure services, and more.
 
 A list with all the Ansible modules can be found [here](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/index.html).
 
