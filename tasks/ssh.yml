@@ -18,6 +18,9 @@
   notify: "restart_ssh"
   changed_when: true
 
+- name: Force all notified handlers to run at this point
+  ansible.builtin.meta: flush_handlers
+
 - name: Update Ansible to use new SSH port
   ansible.builtin.set_fact:
     ansible_port: "{{ ssh_port }}"
