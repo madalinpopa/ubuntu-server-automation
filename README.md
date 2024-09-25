@@ -1072,6 +1072,7 @@ Why we want two networks? We will create a public network that will be used by s
         name: services
         tasks_from: networks.yml
 ```
+As you noticed, this time we don't need to use the `become: true` directive because the `docker_network` module does not require elevated privileges.
 
 After updating the playbook, run it using the following command:
 
@@ -1079,7 +1080,8 @@ After updating the playbook, run it using the following command:
 ansible-playbook -i inventory.yml site.yml
 ```
 
-If the playbook runs successfully, the Docker networks will be created on your VPS.
+🎉 If the playbook runs successfully, the Docker networks will be created on your VPS.
+
 To check the Docker networks, you can use the following command:
 
 ```bash
