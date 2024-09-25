@@ -163,10 +163,12 @@ Ansible is looking for the inventory file in the following order:
 Now, let's test the connection with our VPS. The first step is to create an inventory file to define the VPS host. Create a new file named `inventory.yml` in your project directory with the following content:
 
 ```yaml
+---
 vps:
   hosts:
     mycloud.com:
 ```
+
 If you followed the steps in SSH Key Pair Generation Guide, you can use `mycloud.com` as the host name. If you used a different host name, replace `mycloud.com` with your VPS host name that you defined in the SSH configuration file.
 
 In this example, we defined a group named `vps` with a single host named `mycloud.com`. You can define multiple hosts and groups in the inventory file based on your requirements.
