@@ -627,7 +627,7 @@ This is an Ansible handler that reloads the Caddy service after the configuratio
 ansible-playbook -i inventory.yml site.yml
 ```
 
-🎉 If the playbook runs successfully, Caddy will be installed on your VPS. You can access the Caddy server by visiting `http://<your_domain>` in your web browser and see the content of the `index.html` file.
+🎉 If the playbook runs successfully, Caddy will be installed on your VPS. You can access the Caddy server by visiting `https://<your_domain>` in your web browser and see the content of the `index.html` file.
 
 |🎯 At this point, our `site.yml` playbook should look like this|
 |---------------------------------------------------------------|
