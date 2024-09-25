@@ -324,26 +324,14 @@ mkdir -p roles/packages/tasks
 
 5. Update the `site.yml` playbook to include the `packages` role:
 
-To use a role in a playbook, you have two options: you can include the role directly in the playbook or you can use the import role task.
-
-Using the `roles` directive:
-
 ```yaml
 ---
 - name: Configure VPS
   hosts: vps
-  roles:
-    - role: packages
-```
-
-Using the `import_role` task:
-
-```yaml
----
-- hosts: vps
   tasks:
 
     # The other tasks are above
+
     - ansible.builtin.import_role:
         name: packages
 ```
