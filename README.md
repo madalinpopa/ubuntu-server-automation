@@ -465,11 +465,26 @@ To create a new encrypted file using Ansible Vault, you can use the following co
 ```bash
 ansible-vault create secrets.yml
 ```
-Now, you can add the sensitive data to the file and save it. To edit an existing encrypted file, you can use the `edit` command:
+
+You will be prompted to enter a password to encrypt the file. Make sure to use a strong password and keep it secure.
+
+Add the following content to the `secrets.yml` file:
+
+```yaml
+---
+username: <your_vps_username>
+```
+
+Ansible will open the default text editor to enter the content of the file. After entering the content, save and close the file. The file will be encrypted using the password you provided.
+
+**Note**: If you try to save the file without entering any content, you will get an error messsage.
+
+To edit an existing encrypted file, you can use the `edit` command:
 
 ```bash
 ansible-vault edit secrets.yml
 ```
+
 To view the contents of an encrypted file, you can use the `view` command:
 
 ```bash
@@ -481,6 +496,7 @@ To run a playbook that uses an encrypted file, you need to provide the vault pas
 ```bash
 ansible-playbook -i inventory.yml site.yml --ask-vault-pass
 ```
+
 However, typing the vault password every time you run a playbook can be cumbersome. To avoid this, you can store the vault password in a file and reference it in the ansible.cfg file:
 
 Add the following lines to the `ansible.cfg` file:
