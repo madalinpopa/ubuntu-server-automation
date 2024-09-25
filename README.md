@@ -1579,7 +1579,7 @@ ansible-playbook -i inventory.yml services.yml
 🎉 If the playbook runs successfully, Gitea will be installed and configured in a Docker container on your VPS. To access Gitea using the domain name, you can use the following URL in your web browser:
 
 ```bash
-http://gitea.<your_domain>
+https://gitea.<your_domain>
 ```
 When we access Gitea for the first time, we need to configure the instance settings. You don't have to change anything in the database settings, because we already configured them in the `gitea.yml` tasks. All that you have to do here is to create the admin user in `Admin Account Settings` section. This is required because by default we deactivate the user registration.
 
