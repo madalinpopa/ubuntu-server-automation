@@ -1099,6 +1099,13 @@ docker network ls
     - secrets.yml
   tasks:
 
+    - name: Print Hello World
+      ansible.builtin.debug:
+        msg: "Hello, World!"
+
+    - name: Ping
+      ansible.builtin.ping:
+
     - ansible.builtin.import_role:
         name: packages
       become: true
@@ -1117,13 +1124,6 @@ docker network ls
         name: security
         tasks_from: ssh.yml
       become: true
-
-    - name: Force all notified handlers to run at this point
-      ansible.builtin.meta: flush_handlers
-
-    - name: Update Ansible to use new SSH port
-      ansible.builtin.set_fact:
-        ansible_port: "{{ ssh_port }}"
 
     - ansible.builtin.import_role:
         name: security
