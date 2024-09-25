@@ -1678,6 +1678,13 @@ ansible-playbook -i inventory.yml services.yml
 https://umami.<your_domain>
 ```
 
+By default `Umami` creates a user with the following credentials:
+
+- Username: `admin`
+- Password: `umami`
+
+When we access Umami for the first time, we need to change the password for the `admin` user.
+
 |🎯 At this point, our `service.yml` playbook should look like this|
 |------------------------------------------------------------------|
 
