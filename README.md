@@ -291,7 +291,7 @@ mkdir -p roles/packages/tasks
 
 3. Inside `roles/packages/tasks/`, create a new file named `apt.yml` with the following content:
 
-[apt.yml](./tasks/apt.yml)
+ - [apt.yml](./tasks/apt.yml)
 
 4. Create a new file (if it doesn't exist) named `main.yml` in the `roles/packages/tasks/` directory with the following content:
 
@@ -390,7 +390,7 @@ Docker is a popular platform for developing, shipping, and running applications 
 
 1. Create a new file named `docker.yml` in the `roles/packages/tasks/` directory with the content from the following file:
 
-[docker.yml](./tasks/docker.yml)
+- [docker.yml](./tasks/docker.yml)
 
 2. Create a new file named `daemon.json` in the `roles/packages/files/` directory with the following content:
 
@@ -528,7 +528,7 @@ Caddy is a powerful, extensible web server that can be used to serve static webs
 
 1. Create a new file named `caddy.yml` in the `roles/packages/tasks/` directory with content from the following file:
 
-[caddy.yml](./tasks/caddy.yml)
+- [caddy.yml](./tasks/caddy.yml)
 
 2. Now, we will create a basic Caddy configuration file. Create a new file named `Caddyfile.j2` in the `roles/packages/templates/` directory with the following content:
 
@@ -628,7 +628,7 @@ mkdir -p roles/security/handlers
 
 2. Inside `roles/security/tasks/`, create a new file named `ssh.yml` with the content from the following file:
 
-[ssh.yml](./tasks/ssh.yml)
+- [ssh.yml](./tasks/ssh.yml)
 
 This task hardens the SSH configuration by setting the following options:
 
@@ -781,7 +781,7 @@ A firewall is a network security system that monitors and controls incoming and 
 
 1. Inside `roles/security/tasks/`, create a new file named `firewall.yml` with content from the following file:
 
-[firewall.yml](./tasks/firewall.yml)
+- [firewall.yml](./tasks/firewall.yml)
 
 2. Update the `site.yml` playbook to include the `firewall` role:
 
@@ -868,7 +868,7 @@ Fail2ban is an intrusion prevention software framework that protects computer se
 
 1. Inside `roles/security/tasks/`, create a new file named `fail2ban.yml` with content from the following file:
 
-[fail2ban.yml](./tasks/fail2ban.yml)
+- [fail2ban.yml](./tasks/fail2ban.yml)
 
 2. Append the following content to the `main.yml` file in the `roles/security/handlers/` directory:
 
@@ -1103,7 +1103,7 @@ PostgreSQL is a powerful, open-source relational database management system. In 
 
 1. Inside `roles/services/tasks/`, create a new file named `postgresql.yml` with content from the following file:
 
-[postgresql.yml](./services/postgresql.yml)
+- [postgresql.yml](./services/postgresql.yml)
 
 2. Next step is to define the variables used in the `postgresql.yml` tasks. Update the `group_vars/all.yml` file with the following content:
 
@@ -1272,7 +1272,7 @@ PgAdmin is a popular open-source administration and development platform for Pos
 
 1. Inside `roles/services/tasks/`, create a new file named `pgadmin.yml` with content from the following file:
 
-[pgadmin.yml](./tasks/pgadmin.yml)
+- [pgadmin.yml](./tasks/pgadmin.yml)
 
 2. Next step is to define the variables used in the `pgadmin.yml` tasks. Update the `group_vars/all.yml` file with the following content:
 
@@ -1454,7 +1454,7 @@ Gitea is a self-hosted Git service that is similar to GitHub. In this section, w
 
 1. Inside `roles/services/tasks/`, create a new file named `gitea.yml` with content from the following file:
 
-[gitea.yml](./tasks/gitea.yml)
+- [gitea.yml](./tasks/gitea.yml)
 
 A lot of things are happening in this task. We are creating a Docker volume for Gitea, creating a Docker container for Gitea, setting environment variables for Gitea configuration, exposing ports for SSH and HTTP access, and copying custom templates for the Gitea interface.
 
