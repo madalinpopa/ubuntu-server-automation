@@ -1500,7 +1500,7 @@ Here is the list with the environment variables used in the Gitea container and 
 - `GITEA__database__USER={{ gitea_database_user }}`: Specifies the database user.
 - `GITEA__database__PASSWD={{ gitea_database_pass }}`: Specifies the database password.
 - `GITEA__service__DISABLE_REGISTRATION=true`: Disables user registration.
-- `GITEA__service__EMAIL_DOMAIN_ALLOWLIST={{ gitea['domain'] }}`: Specifies the allowed email domain.
+- `GITEA__service__EMAIL_DOMAIN_ALLOWLIST={{ gitea['email_domain'] }}`: Specifies the allowed email domain.
 - `GITEA__service__DEFAULT_USER_VISIBILITY=private`: Sets the default user visibility to private.
 - `GITEA__service__DEFAULT_ORG_VISIBILITY=private`: Sets the default organization visibility to private.
 - `GITEA__repository__DEFAULT_PRIVATE=private`: Sets the default repository visibility to private.
@@ -1521,6 +1521,7 @@ gitea:
     container_hostname: gitea
     network: public
     domain: gitea.<your_domain>
+    email_domain: "<your_domain>"
 ```
 
 For the `gitea_database_name`, `gitea_database_user`, and `gitea_database_pass` variables, we will use the `secrets.yml` file to store the sensitive data.
@@ -1533,12 +1534,7 @@ gitea_database_user: gitea
 gitea_database_pass: mysecretpassword
 ```
 
-3. We can customize a little bit the Gitea interface. To do this we need to create two custom templates. Create a new folder named `files` in the `services` role directory and two files `home.tmpl` an `head_navbar.tmpl` with the content from the following files:
-
-- [home.tmpl](./files/home.tmpl) 
-- [head_navbar.tmpl](./files/head_navbar.tmpl)
-
-4. Update the `services.yml` playbook to include the `gitea` tasks:
+3. Update the `services.yml` playbook to include the `gitea` tasks:
 
 ```yaml
 ---
@@ -1555,7 +1551,7 @@ gitea_database_pass: mysecretpassword
         tasks_from: gitea.yml
 ```
 
-5. Now, we need to expose the Gitea interface using Caddy as a reverse proxy. Update the `Caddyfile.j2` template file to include a reverse proxy configuration for Gitea:
+4. Now, we need to expose the Gitea interface using Caddy as a reverse proxy. Update the `Caddyfile.j2` template file to include a reverse proxy configuration for Gitea:
 
 ```jinja
 gitea.<your_domain> {
@@ -1587,14 +1583,14 @@ ansible-playbook -i inventory.yml services.yml
 ```bash
 http://gitea.<your_domain>
 ```
-When we access Gitea for the first time, we need to configure the instance settings. You don't have to change anything in the database settings, because we already configured them in the `gitea.yml` tasks.
+When we access Gitea for the first time, we need to configure the instance settings. You don't have to change anything in the database settings, because we already configured them in the `gitea.yml` tasks. All that you have to do here is to create the admin user in `Admin Account Settings` section. This is required because by default we deactivate the user registration.
 
 |🎯 At this point, our `service.yml` playbook should look like this|
 |------------------------------------------------------------------|
 
 ```yaml
 ---
-- name: Configure VPS Services
+- name: Configure VPS Service
   hosts: vps
   vars_files:
     - secrets.yml
