@@ -551,9 +551,15 @@ If the playbook runs successfully, Docker will be installed on your VPS.
     - secrets.yml
   tasks:
 
+    - name: Print Hello World
+      ansible.builtin.debug:
+        msg: "Hello, World!"
+
+    - name: Ping
+      ansible.builtin.ping:
+
     - ansible.builtin.import_role:
         name: packages
-        tasks_from: apt.yml
       become: true
 
     - ansible.builtin.import_role:
