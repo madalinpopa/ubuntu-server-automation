@@ -1304,7 +1304,7 @@ PgAdmin is a popular open-source administration and development platform for Pos
 
 1. Inside `roles/services/tasks/`, create a new file named `pgadmin.yml` with content from the following file:
 
-- [pgadmin.yml](./tasks/pgadmin.yml)
+- [pgadmin.yml](./services/pgadmin.yml)
 
 2. Next step is to define the variables used in the `pgadmin.yml` tasks. Update the `group_vars/all.yml` file with the following content:
 
