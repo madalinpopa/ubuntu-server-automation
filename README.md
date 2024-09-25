@@ -1666,4 +1666,48 @@ umami.<your_domain> {
 ansible-playbook -i inventory.yml packages.yml -t caddy
 ```
 
+7. Last step is to run the `services.yml` playbook to install and configure Umami:
+
+```bash
+ansible-playbook -i inventory.yml services.yml
+```
+
+🎉 If the playbook runs successfully, Umami will be installed and configured in a Docker container on your VPS. To access Umami using the domain name, you can use the following URL in your web browser:
+
+```bash
+https://umami.<your_domain>
+```
+
+|🎯 At this point, our `service.yml` playbook should look like this|
+|------------------------------------------------------------------|
+
+```yaml
+---
+- name: Configure VPS Services
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: networks.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: postgresql.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: pgadmin.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: gitea.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: umami.yml
+```
+
 

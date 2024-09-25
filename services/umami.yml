@@ -1,0 +1,62 @@
+---
+- name: Create umami container
+  community.docker.docker_container:
+    name: "{{ umami['container_name'] }}"
+    image: "{{ umami['container_image'] }}"
+    hostname: "{{ umami['container_hostname'] }}"
+    pull: true
+    restart_policy: unless-stopped
+    recreate: true
+    image_name_mismatch: recreate
+    env:
+      APP_SECRET: "{{ umami_app_secret }}"
+      DATABASE_URL: postgresql://{{ umami_database_user }}:{{ umami_database_pass }}@postgres:5432/{{ umami_database_name }}
+      DATABASE_TYPE: postgresql
+    networks:
+      - name: "{{ umami['network'] }}"
+    ports:
+      - "3001:3000"
+
+- name: Create application database
+  community.postgresql.postgresql_db:
+    name: "{{ umami_database_name }}"
+    encoding: UTF-8
+    template: template0
+    lc_collate: en_US.UTF-8
+    lc_ctype: en_US.UTF-8
+    login_user: "{{ postgres_db_user }}"
+    login_password: "{{ postgres_db_pass }}"
+    login_host: localhost
+  no_log: true
+
+- name: Create database user
+  community.postgresql.postgresql_user:
+    name: "{{ umami_database_user }}"
+    password: "{{ umami_database_pass }}"
+    login_user: "{{ postgres_db_user }}"
+    login_password: "{{ postgres_db_pass }}"
+    login_host: localhost
+  no_log: true
+
+- name: Update database owner
+  community.postgresql.postgresql_owner:
+    db: "{{ umami_database_name }}"
+    new_owner: "{{ umami_database_user }}"
+    obj_name: "{{ umami_database_name }}"
+    obj_type: database
+    login_user: "{{ postgres_db_user }}"
+    login_password: "{{ postgres_db_pass }}"
+    login_host: localhost
+  no_log: True
+
+- name: Grant database privileges to application user
+  community.postgresql.postgresql_privs:
+    db: "{{ umami_database_name }}"
+    privs: ALL
+    type: database
+    role: "{{ umami_database_user }}"
+    obj: "{{ umami_database_name }}"
+    login_user: "{{ postgres_db_user }}"
+    login_password: "{{ postgres_db_pass }}"
+    login_host: localhost
+  no_log: True
