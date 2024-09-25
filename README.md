@@ -31,6 +31,7 @@ This repository provides a comprehensive guide to create an Ansible project and 
         * [PostgreSQL Installation](#postgresql-installation)
         * [PgAdmin Installation](#pgadmin-installation)
         * [Gitea Installation](#gitea-installation)
+        * [Umami Installation](#umami-installation)
 * [Resources](#resources)
 * [Feedback](#feedback)
 
