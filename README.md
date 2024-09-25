@@ -1501,6 +1501,7 @@ Here is the list with the environment variables used in the Gitea container and 
 - `GITEA__service__EMAIL_DOMAIN_ALLOWLIST={{ gitea['email_domain'] }}`: Specifies the allowed email domain.
 - `GITEA__service__DEFAULT_USER_VISIBILITY=private`: Sets the default user visibility to private.
 - `GITEA__service__DEFAULT_ORG_VISIBILITY=private`: Sets the default organization visibility to private.
+- `GITEA__server__SSH_PORT=222`: Specifies the SSH port.
 - `GITEA__repository__DEFAULT_PRIVATE=private`: Sets the default repository visibility to private.
 - `GITEA__repository__FORCE_PRIVATE=true`: Forces repositories to be private.
 - `GITEA__openid__ENABLE_OPENID_SIGNIN=false`: Disables OpenID sign-in.
@@ -1581,18 +1582,18 @@ ansible-playbook -i inventory.yml services.yml
 ```bash
 https://gitea.<your_domain>
 ```
-When we access Gitea for the first time, we need to configure the instance settings. You don't have to change anything in the database settings, because we already configured them in the `gitea.yml` tasks. All that you have to do here is to create the admin user in `Admin Account Settings` section. This is required because by default we disabled the user registration.
+When we access Gitea for the first time, we need to configure the instance settings. You don't have to change anything in the database settings, because we already configured them in the `gitea.yml` tasks. All that you have to do here is to create the admin user in `Administrator Account Settings` section. This is required because by default we disabled the user registration.
 
 |🎯 At this point, our `service.yml` playbook should look like this|
 |------------------------------------------------------------------|
 
 ```yaml
 ---
-- name: Configure VPS Service
+- name: Configure VPS Services
   hosts: vps
   vars_files:
     - secrets.yml
-  tasks:
+  tasks:  
 
     - ansible.builtin.import_role:
         name: services

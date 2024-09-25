@@ -20,6 +20,7 @@
       GITEA__service__EMAIL_DOMAIN_ALLOWLIST={{ gitea['domain'] }}
       GITEA__service__DEFAULT_USER_VISIBILITY=private
       GITEA__service__DEFAULT_ORG_VISIBILITY=private
+      GITEA__server__SSH_PORT=222
       GITEA__repository__DEFAULT_PRIVATE=private
       GITEA__repository__FORCE_PRIVATE=true
       GITEA__openid__ENABLE_OPENID_SIGNIN=false
