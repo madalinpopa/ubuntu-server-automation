@@ -1,0 +1,21 @@
+---
+- name: Ensure Fail2ban is installed
+  ansible.builtin.apt:
+    name: fail2ban
+    state: present
+
+- name: Copy fail2ban configuration
+  copy:
+    dest: /etc/fail2ban/jail.local
+    content: |
+        [sshd]
+        enabled = true             
+        port = ssh                
+        filter = sshd            
+        logpath = /var/log/auth.log
+        maxretry = 3
+        bantime = 3600
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart_fail2ban

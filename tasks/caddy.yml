@@ -1,0 +1,48 @@
+---
+- name: Add Caddy GPG apt Key
+  vars:
+    keyrings: /usr/share/keyrings
+    apt_repo: https://dl.cloudsmith.io/public/caddy/testing/deb/debian  
+  block:
+    - name: Download Caddy gpg key
+      ansible.builtin.get_url:
+        url: https://dl.cloudsmith.io/public/caddy/stable/gpg.key        
+        dest: "{{ keyrings }}/caddy-stable-archive-keyring.asc"
+
+
+    - name: Add Caddy apt repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by={{ keyrings }}/caddy-stable-archive-keyring.asc] {{ apt_repo }} any-version main"
+        state: present
+
+    - name: Add Caddy source repository
+      ansible.builtin.apt_repository:
+        repo: "deb-src [signed-by={{ keyrings }}/caddy-stable-archive-keyring.asc] {{ apt_repo }} any-version main"
+        state: present
+
+- name: Install Caddy package
+  ansible.builtin.package:
+    name: caddy
+    state: present
+
+- name: Enable caddy service
+  ansible.builtin.service:
+    name: caddy.service
+    enabled: yes
+
+- name: Copy Caddy configuration file
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: /etc/caddy/Caddyfile
+  notify: restart_caddy
+
+- name: Create Caddy web root directory
+  ansible.builtin.file:
+    path: /var/www/html
+    state: directory
+    mode: '0755'
+
+- name: Copy index.html file
+    ansible.builtin.copy:
+        src: index.html
+        dest: /var/www/html/index.html

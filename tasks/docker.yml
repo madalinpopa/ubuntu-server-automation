@@ -1,0 +1,63 @@
+---
+- name: Add Docker GPG apt Key
+  vars:
+    keyrings: /etc/apt/keyrings
+    apt_repo: https://download.docker.com/linux/ubuntu
+  block:
+    - name: Create /etc/apt/keyrings directory
+      ansible.builtin.file:
+        path: "{{ keyrings }}"
+        state: directory
+        mode: '0755'
+
+    - name: Download docker gpg key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: "{{ keyrings }}/docker.asc"
+
+    - name: Add docker apt repository
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by={{ keyrings }}/docker.asc] {{ apt_repo }} {{ ansible_distribution_release }} stable"
+        filename: docker
+        state: present
+
+- name: Install the latest version of Docker engine
+  block:
+    - name: Install docker package
+      ansible.builtin.package:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+
+    - name: Create docker group
+      ansible.builtin.group:
+        name: docker
+        state: present
+
+    - name: Add VPS user to docker group
+      ansible.builtin.user:
+        name: "{{ username }}"
+        groups:
+          - docker
+        append: yes
+        state: present
+
+    - name: Enable docker service
+      ansible.builtin.service:
+        name: docker.service
+        enabled: yes
+
+    - name: Enable containerd service
+      ansible.builtin.service:
+        name: containerd.service
+        enabled: yes
+
+    - name: Copy daemon.json
+      ansible.builtin.template:
+        dest: "/etc/docker/daemon.json"
+        src: "daemon.json"
+      notify: restart_docker

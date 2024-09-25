@@ -1,0 +1,34 @@
+---
+- name: Set timezone to Europe/Bucharest
+  community.general.timezone:
+    name: Europe/Bucharest      # Change this to your timezone
+
+- name: Run "apt-get update"
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Update all packages to their latest version
+  ansible.builtin.apt:
+    name: "*"
+    state: latest
+
+- name: Install required packages
+  ansible.builtin.apt:
+    pkg:
+    - debian-keyring            # Debian keyring
+    - debian-archive-keyring    # Debian archive keyring
+    - build-essential           # Development tools
+    - bash-completion           # Bash completion
+    - apt-transport-https       # HTTPS support for APT
+    - ca-certificates           # CA certificates
+    - python3-full              # Latest Python 3
+    - python3-pip               # Python package installer
+    - fail2ban                  # Intrusion prevention software
+    - gnupg                     # GnuPG
+    - curl                      # Transfer data with URLs
+    - procps                    # Process utilities    
+    - file                      # File type identification
+    - ufw                       # Uncomplicated Firewall
+    - git                       # Version control system
+    - vim                       # Text editor
+

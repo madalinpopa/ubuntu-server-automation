@@ -1,0 +1,23 @@
+---
+- name: Harden SSH Configuration
+  ansible.builtin.blockinfile:
+    path: /etc/ssh/sshd_config
+    block: |
+      Protocol 2
+      PermitRootLogin no
+      PasswordAuthentication no
+      AllowUsers {{ username }}
+      Port {{ ssh_port }}
+      PubkeyAuthentication yes
+      ClientAliveInterval 300
+      ClientAliveCountMax 0
+      MaxAuthTries 3
+      LogLevel VERBOSE
+      MaxStartups 10:30:60
+    backup: yes
+  notify: "restart_ssh"
+  changed_when: true
+
+- name: Update Ansible to use new SSH port
+  ansible.builtin.set_fact:
+    ansible_port: "{{ ssh_port }}"
