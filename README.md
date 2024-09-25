@@ -438,6 +438,8 @@ This file contains the Docker daemon configuration settings. In this example, we
 ```
 This is an Ansible handler that restarts the Docker service after the configuration changes have been applied.
 
+A handler is a task that is triggered by other tasks. Handlers are only executed once at the end of the play, after all the tasks have been completed.
+
 4. Update the `site.yml` playbook to include the `docker` role:
 
 ```yaml
