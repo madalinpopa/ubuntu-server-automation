@@ -848,7 +848,7 @@ After updating the playbook, run it using the following command:
 ansible-playbook -i inventory.yml site.yml
 ```
 
-If the playbook runs successfully, the UFW firewall will be configured to allow SSH, HTTP, and HTTPS connections on your VPS.
+🎉 If the playbook runs successfully, the UFW firewall will be configured to allow SSH, HTTP, and HTTPS connections on your VPS.
 
 The UFW configuration file is located at `/etc/ufw/ufw.conf`. This file contains the settings for the UFW firewall, including the default policy and logging options.
 
@@ -871,6 +871,13 @@ Below are some useful commands to manage UFW:
     - secrets.yml
   tasks:
 
+    - name: Print Hello World
+      ansible.builtin.debug:
+        msg: "Hello, World!"
+
+    - name: Ping
+      ansible.builtin.ping:
+
     - ansible.builtin.import_role:
         name: packages
       become: true
@@ -889,13 +896,6 @@ Below are some useful commands to manage UFW:
         name: security
         tasks_from: ssh.yml
       become: true
-
-    - name: Force all notified handlers to run at this point
-      ansible.builtin.meta: flush_handlers
-
-    - name: Update Ansible to use new SSH port
-      ansible.builtin.set_fact:
-        ansible_port: "{{ ssh_port }}"
 
     - ansible.builtin.import_role:
         name: security
