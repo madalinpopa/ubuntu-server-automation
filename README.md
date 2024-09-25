@@ -734,13 +734,38 @@ Add the following content to the `secrets.yml` file:
 ssh_port: 2222
 ```
 
-After updating the playbook, run it using the following command:
+Another important aspect related to Ansible handlers, is that they are triggered only at the end of the play. This means that if you have multiple tasks that require a handler, the handler will be triggered only after all the tasks in playbook have been executed. 
+
+This can be useful when you want to restart a service only once, even if multiple tasks require it.
+
+However, if a task in playbook fails before the handler is triggered, the handler will not be executed. 
+
+In our scenario, we want to ensure that the handler is triggered right after the SSH configuration is updated. We do this because the SSH service will be restarted, and we want to ensure that the new configuration is applied. Thus, the remaining tasks in the playbook will use the new SSH port.
+
+To ensure that the handler is always triggered, you have `meta: flush_handlers` directive in the `ssh.yml` tasks:
+
+```yaml
+---
+- name: Force all notified handlers to run at this point
+  ansible.builtin.meta: flush_handlers
+
+- name: Update Ansible to use new SSH port
+  ansible.builtin.set_fact:
+    ansible_port: "{{ ssh_port }}"
+```
+
+The first task, `meta: flush_handlers`, forces all notified handlers to run at that point in the playbook, not waiting for the normal sync points. This ensures that the handler is triggered even if a task fails before it.
+
+The second task updates the Ansible port to use the new SSH port defined in the `secrets.yml` file. This allows Ansible to use the new port for SSH connections in subsequent tasks.
+
+
+Now, let's run the playbook to update the SSH configuration on your VPS:
 
 ```bash
 ansible-playbook -i inventory.yml site.yml
 ```
 
-At this point, the SSH port has been changed to `2222`. We meed to update our SSH client configuration `~/.ssh/config` to use the new port when connecting to VPS.
+At this point, the SSH port has been changed to `2222`. We need to update our SSH client configuration `~/.ssh/config` to use the new port when connecting to VPS.
 
 Add the following content to the `~/.ssh/config` file:
 
@@ -751,38 +776,7 @@ Host mycloud.com
   Port 2222
 ```
 
-Another important aspect related to Ansible handlers, is that they are triggered only at the end of the play. This means that if you have multiple tasks that require a handler, the handler will be triggered only after all the tasks in playbook have been executed. This can be useful when you want to restart a service only once, even if multiple tasks require it.
-
-However, if a task in playbook fails before the handler is triggered, the handler will not be executed. To ensure that the handler is always triggered, you can use the `meta: flush_handlers` directive in the playbook:
-
-Add the following task to the `site.yml` playbook:
-
-```yaml
----
-- name: Configure VPS
-  hosts: vps
-  vars_files:
-    - secrets.yml
-  tasks:
-    
-    # The other tasks are above
-
-    - ansible.builtin.import_role:
-        name: security
-        tasks_from: ssh.yml
-      become: true
-
-    - name: Force all notified handlers to run at this point
-      ansible.builtin.meta: flush_handlers
-
-    - name: Update Ansible to use new SSH port
-      ansible.builtin.set_fact:
-        ansible_port: "{{ ssh_port }}"
-```
-
-The first task, `meta: flush_handlers`, forces all notified handlers to run at that point in the playbook, not waiting for the normal sync points. This ensures that the handler is triggered even if a task fails before it.
-
-The second task updates the Ansible port to use the new SSH port defined in the `secrets.yml` file. This allows Ansible to use the new port for SSH connections in subsequent tasks.
+🎉 Congratulations! You have successfully updated the SSH configuration on your VPS.
 
 |🎯 At this point, our `site.yml` playbook should look like this|
 |---------------------------------------------------------------|
@@ -794,6 +788,13 @@ The second task updates the Ansible port to use the new SSH port defined in the 
   vars_files:
     - secrets.yml
   tasks:
+
+    - name: Print Hello World
+      ansible.builtin.debug:
+        msg: "Hello, World!"
+
+    - name: Ping
+      ansible.builtin.ping:
 
     - ansible.builtin.import_role:
         name: packages
@@ -813,13 +814,6 @@ The second task updates the Ansible port to use the new SSH port defined in the 
         name: security
         tasks_from: ssh.yml
       become: true
-
-    - name: Force all notified handlers to run at this point
-      ansible.builtin.meta: flush_handlers
-
-    - name: Update Ansible to use new SSH port
-      ansible.builtin.set_fact:
-        ansible_port: "{{ ssh_port }}"
 ```
 
 #### Firewall Configuration
