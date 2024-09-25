@@ -497,9 +497,10 @@ To run a playbook that uses an encrypted file, you need to provide the vault pas
 ansible-playbook -i inventory.yml site.yml --ask-vault-pass
 ```
 
-However, typing the vault password every time you run a playbook can be cumbersome. To avoid this, you can store the vault password in a file and reference it in the ansible.cfg file:
+However, typing the vault password every time you run a playbook can be cumbersome. To avoid this, you can store the vault password in a file and reference it in the `ansible.cfg` file:
 
-Add the following lines to the `ansible.cfg` file:
+Add the `vault_password_file` option under `defaults` section with the path to your text file which contains the vault password. 
+
 ```ini
 [defaults]
 vault_password_file = ~/.vault-pass.txt
@@ -511,7 +512,9 @@ Make sure to set the correct permissions on the vault password file to keep it s
 chmod 600 ~/.vault-pass.txt
 ```
 
-Now, we need to reference the `secretes.yml` file in our `site.yml` playbook. We will define the `username` variable in the `secrets.yml` file and use it in the `docker.yml` tasks.
+Now, we need to reference the `secretes.yml` file in our `site.yml` playbook. All the variables defined in the `secrets.yml` file will be available to all the tasks in the playbook. 
+
+Update the `site.yml` playbook to include the `secrets.yml` file:
 
 ```yaml
 ---
@@ -528,12 +531,14 @@ Now, we need to reference the `secretes.yml` file in our `site.yml` playbook. We
         tasks_from: docker.yml
       become: true
 ```
+
 After updating the playbook, run it using the following command:
 
 ```bash
 ansible-playbook -i inventory.yml site.yml
 ```
-This way, you can securely store and manage sensitive data in your Ansible playbooks using Ansible Vault.
+
+If the playbook runs successfully, Docker will be installed on your VPS.
 
 |🎯 At this point, our `site.yml` playbook should look like this|
 |---------------------------------------------------------------|
