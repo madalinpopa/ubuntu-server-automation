@@ -1,0 +1,21 @@
+---
+- name: Create pgadmin volume
+  community.docker.docker_volume:
+    name: "{{ pgadmin['data_volume'] }}"
+
+- name: Create pgadmin container
+  community.docker.docker_container:
+    name: "{{ pgadmin['container_name'] }}"
+    image: "{{ pgadmin['container_image'] }}"
+    hostname: "{{ pgadmin['container_hostname'] }}"
+    restart_policy: unless-stopped
+    recreate: true
+    env:
+      PGADMIN_DEFAULT_EMAIL: "{{ pgadmin_email }}"
+      PGADMIN_DEFAULT_PASSWORD: "{{ pgadmin_password }}"
+    ports:
+        - "8081:80"
+    networks:
+      - name: "{{ pgadmin['network'] }}"
+    volumes:
+      - "{{ pgadmin['data_volume'] }}:/var/lib/pgadmin"
