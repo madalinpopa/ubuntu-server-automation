@@ -1488,7 +1488,7 @@ Gitea is a self-hosted Git service that is similar to GitHub. In this section, w
 
 1. Inside `roles/services/tasks/`, create a new file named `gitea.yml` with content from the following file:
 
-- [gitea.yml](./tasks/gitea.yml)
+- [gitea.yml](./services/gitea.yml)
 
 A lot of things are happening in this task. We are creating a Docker volume for Gitea, creating a Docker container for Gitea, setting environment variables for Gitea configuration, exposing ports for SSH and HTTP access, and copying custom templates for the Gitea interface.
 
