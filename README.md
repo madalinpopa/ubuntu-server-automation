@@ -283,9 +283,9 @@ In this guide, we will create different roles to organize our playbooks and task
 
 Now that we have our Ansible project set up, let's move on to configuring our VPS. We will focus on the following areas:
 
-- Package Installation: Install essential packages like Docker, Cady, Git, and Python.
-- Security Setup: Configure firewall rules, enable SSH hardening, and set up fail2ban.
-- Service Configuration: Create an configure Docker containers with different services.
+- **Package Installation**: Install essential packages like Docker, Cady, Git, and Python.
+- **Security Setup**: Configure firewall rules, enable SSH hardening, and set up fail2ban.
+- **Service Configuration**: Create an configure Docker containers with different services.
 
 ### Package Installation
 
