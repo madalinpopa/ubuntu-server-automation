@@ -948,7 +948,7 @@ After updating the playbook, run it using the following command:
 ansible-playbook -i inventory.yml site.yml
 ```
 
-If the playbook runs successfully, Fail2ban will be installed and configured to protect your VPS from brute-force attacks.
+🎉 If the playbook runs successfully, Fail2ban will be installed and configured to protect your VPS from brute-force attacks.
 
 Now, few things about fail2ban. Fail2ban is a service that monitors log files for failed login attempts and blocks the IP addresses of the attackers. The configuration file for Fail2ban is located at `/etc/fail2ban/jail.local`. This file contains the settings for the services that Fail2ban monitors and the actions to take when an attack is detected.
 
@@ -972,6 +972,13 @@ Below are some useful commands to manage Fail2ban:
     - secrets.yml
   tasks:
 
+    - name: Print Hello World
+      ansible.builtin.debug:
+        msg: "Hello, World!"
+
+    - name: Ping
+      ansible.builtin.ping:
+
     - ansible.builtin.import_role:
         name: packages
       become: true
@@ -990,13 +997,6 @@ Below are some useful commands to manage Fail2ban:
         name: security
         tasks_from: ssh.yml
       become: true
-
-    - name: Force all notified handlers to run at this point
-      ansible.builtin.meta: flush_handlers
-
-    - name: Update Ansible to use new SSH port
-      ansible.builtin.set_fact:
-        ansible_port: "{{ ssh_port }}"
 
     - ansible.builtin.import_role:
         name: security
