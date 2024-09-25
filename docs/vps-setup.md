@@ -7,7 +7,7 @@ In this guide, we will walk you through the process of setting up a Virtual Priv
 * [VPS Disk Encryption](#vps-disk-encryption)
 * [Global VPS Providers](#global-vps-providers)
 * [Official Linux Distribution Websites](#official-linux-distribution-websites)
-* [Install Ubuntu 24.04 LTS on Chroot.ro](#install-ubuntu-24.04-lts-on-chroot.ro)
+* [Install Ubuntu 24.04 LTS](#install-ubuntu-24.04-lts)
 
 ## Picking a VPS Provider
 
@@ -63,4 +63,8 @@ If you prefer to install a specific Linux distribution on your VPS, you can down
 For this guide, we will use the Ubuntu 24.04 LTS (Long Term Support) release. You can download the ISO image from the following link:
 
 https://releases.ubuntu.com/24.04/ubuntu-24.04.1-live-server-amd64.iso
+
+## Install Ubuntu 24.04 LTS
+
+You can find full installation instructions for Ubuntu 24.04 LTS on the [official Ubuntu website](https://ubuntu.com/tutorials/install-ubuntu-server#1-overview).
 
