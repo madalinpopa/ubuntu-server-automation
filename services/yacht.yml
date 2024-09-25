@@ -1,7 +1,7 @@
 ---
 - name: Create yacht volume
   community.docker.docker_volume:
-    name: "{{ yacht['data_volume' }}"
+    name: "{{ yacht['data_volume'] }}"
 
 - name: Create yacht container
   community.docker.docker_container:
