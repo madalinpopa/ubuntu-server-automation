@@ -32,6 +32,7 @@ This repository provides a comprehensive guide to create an Ansible project and 
         * [PgAdmin Installation](#pgadmin-installation)
         * [Gitea Installation](#gitea-installation)
         * [Umami Installation](#umami-installation)
+        * [Yacht Installation](#yacht-installation)
 * [Resources](#resources)
 * [Feedback](#feedback)
 
@@ -1715,6 +1716,69 @@ When we access Umami for the first time, we need to change the password for the 
     - ansible.builtin.import_role:
         name: services
         tasks_from: umami.yml
+```
+
+#### Yacht Installation
+
+Yacht is a self-hosted web interface for managing Docker containers. In this section, we will use Ansible to install and configure Yacht in a Docker container on our VPS.
+
+1. Inside `roles/services/tasks/`, create a new file named `yacht.yml` with content from the following file:
+
+- [yacht.yml](./services/yacht.yml)
+
+2. Next step is to define the variables used in the `yacht.yml` tasks. Update the `group_vars/all.yml` file with the following content:
+
+```yaml
+# Yacht Container Configuration
+yacht:
+    data_volume: yacht_data
+    container_image: selfhostedpro/yacht:latest
+    container_name: yacht
+    container_hostname: yacht
+    network: public
+```
+
+3. Update Caddy to expose the Yacht interface using a reverse proxy. Update the `Caddyfile.j2` template file to include a reverse proxy configuration for Yacht:
+
+```jinja
+yacht.<your_domain> {
+    reverse_proxy localhost:8000
+}
+```
+
+4. After updating the `Caddyfile.j2` template file, run the `packages.yml` playbook to apply the changes:
+
+```bash
+ansible-playbook -i inventory.yml packages.yml -t caddy
+```
+
+5. Update the `services.yml` playbook to include the `yacht` tasks:
+
+```yaml
+---
+- name: Configure VPS Services
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    # The other tasks are above
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: yacht.yml
+```
+
+6. Run the `services.yml` playbook to install and configure Yacht:
+
+```bash
+ansible-playbook -i inventory.yml services.yml
+```
+
+🎉 If the playbook runs successfully, Yacht will be installed and configured in a Docker container on your VPS. To access Yacht using the domain name, you can use the following URL in your web browser:
+
+```bash
+https://yacht.<your_domain>
 ```
 
 

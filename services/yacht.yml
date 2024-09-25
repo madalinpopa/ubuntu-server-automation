@@ -1,0 +1,19 @@
+---
+- name: Create yacht volume
+  community.docker.docker_volume:
+    name: "{{ yacht['data_volume' }}"
+
+- name: Create yacht container
+  community.docker.docker_container:
+    name: "{{ yacht['container_name'] }}"
+    image: "{{ yacht['container_image'] }}"
+    hostname: "{{ yacht['container_hostname'] }}" 
+    restart_policy: unless-stopped
+    recreate: true
+    ports:
+      - "8000:8000"
+    networks:
+      - name: "{{ yacht['network'] }}"
+    volumes:
+      - "{{ data_volume }}:/config"
+      - /var/run/docker.sock:/var/run/docker.sock
