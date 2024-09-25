@@ -1559,20 +1559,12 @@ gitea.<your_domain> {
 }
 ```
 
-6. After updating the `Caddyfile.j2` template file, run the `site.yml` playbook to apply the changes:
+6. After updating the `Caddyfile.j2` template file, run the `packages.yml` playbook to apply the changes:
 
 ```bash
 ansible-playbook -i inventory.yml packages.yml -t caddy
 ```
-
-7. Before accessing Gitea, we need to initialize the database. To do this, we need to open our pgAdmin interface and create a new database, and user with the same values that we defined in the `gitea_database_name` and `gitea_database_user` variables.
-
-```sql
-CREATE ROLE your_gitea_username WITH LOGIN PASSWORD 'your_password';
-CREATE DATABASE your_database_name WITH OWNER your_gitea_username TEMPLATE template0 ENCODING UTF8 LC_COLLATE 'en_US.UTF-8' LC_CTYPE 'en_US.UTF-8';
-```
-
-After creating the database and user, is time to deploy our Gitea container. Run the services playbook:
+7. Last step is to run the `services.yml` playbook to install and configure Gitea:
 
 ```bash
 ansible-playbook -i inventory.yml services.yml
@@ -1612,3 +1604,66 @@ When we access Gitea for the first time, we need to configure the instance setti
         name: services
         tasks_from: gitea.yml
 ```
+
+#### Umami Installation
+
+Umami is a simple, easy-to-use, self-hosted web analytics solution. In this section, we will use Ansible to install and configure Umami in a Docker container on our VPS.
+
+1. Inside `roles/services/tasks/`, create a new file named `umami.yml` with content from the following file:
+
+- [umami.yml](./services/umami.yml)
+
+2. Next step is to define the variables used in the `umami.yml` tasks. Update the `group_vars/all.yml` file with the following content:
+
+```yaml
+# Umami Container Configuration
+umami:
+    container_image: ghcr.io/umami-software/umami:postgresql-latest
+    container_name: umami
+    container_hostname: umami
+    network: public
+```
+
+For the `umami_database_name`, `umami_database_user`, `umami_database_pass` and `umami_app_secret` variables, we will use the `secrets.yml` file to store the sensitive data.
+
+Edit the `secrets.yml` file using `ansible-vault edit secrets.yml` and add the following content:
+
+```yaml
+umami_database_name: umami
+umami_database_user: umami
+umami_database_pass: mysecretpassword
+umami_app_secret: mysecretappsecret
+```
+
+3. Update the `services.yml` playbook to include the `umami` tasks:
+
+```yaml
+---
+- name: Configure VPS Services
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    # The other tasks are above
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: umami.yml
+```
+
+4. Now, we need to expose the Umami interface using Caddy as a reverse proxy. Update the `Caddyfile.j2` template file to include a reverse proxy configuration for Umami:
+
+```jinja
+umami.<your_domain> {
+    reverse_proxy localhost:3001
+}
+```
+
+6. After updating the `Caddyfile.j2` template file, run the `packages.yml` playbook to apply the changes:
+
+```bash
+ansible-playbook -i inventory.yml packages.yml -t caddy
+```
+
+
