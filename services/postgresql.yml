@@ -11,6 +11,8 @@
     restart_policy: unless-stopped
     image_name_mismatch: recreate
     recreate: true
+    ports:
+      - "5432:5432"
     env:
       POSTGRES_USER: "{{ postgres_db_user }}"
       POSTGRES_PASSWORD: "{{ postgres_db_pass }}"
