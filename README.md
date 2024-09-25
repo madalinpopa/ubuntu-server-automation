@@ -591,10 +591,9 @@ This configuration file defines a simple Caddy server that serves files from the
 
 [index.html](./files/index.html)
 
-4. Create a new file `main.yml` in the `roles/packages/handlers/` directory with the following content:
+4. Add to `main.yml` file in the `roles/packages/handlers/` directory with the following content:
 
 ```yaml
----
 - name: restart_caddy
   become: true
   ansible.builtin.systemd_service:
