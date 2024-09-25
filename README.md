@@ -458,9 +458,7 @@ A handler is a task that is triggered by other tasks. Handlers are only executed
 
 Before running the playbook, we need to discuss a little bit how to handle sensitive data in Ansible. As you were able to see, in our docker tasks, we have a variable `{{ username }}` that is not defined anywhere. This is because we don't want to hardcode sensitive data in our playbooks. Instead, we can use Ansible Vault to encrypt sensitive data and store it securely.
 
-Ansible Vault is a feature that allows you to encrypt sensitive data in your playbooks. You can use Ansible Vault to encrypt variables, files, and even entire playbooks. To create a new encrypted file using Ansible Vault, you can use the following command:
-
-```bash
+Ansible Vault is a feature that allows you to encrypt sensitive data in your playbooks. You can use Ansible Vault to encrypt variables, files, and even entire playbooks. The encryption algorithm used by Ansible Vault is AES256. 
 
 To create a new encrypted file using Ansible Vault, you can use the following command:
 
