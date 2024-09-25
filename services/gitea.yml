@@ -1,0 +1,77 @@
+---
+- name: Create gitea volume
+  community.docker.docker_volume:
+    name: "{{ gitea['data_volume'] }}"
+
+- name: Create gitea container
+  community.docker.docker_container:
+    name: "{{ gitea['container_name'] }}"
+    image: "{{ gitea['container_image'] }}"
+    hostname: "{{ gitea['container_hostname'] }}"
+    restart_policy: unless-stopped
+    recreate: true
+    env:
+      GITEA__database__DB_TYPE=postgres            
+      GITEA__database__HOST=postgres               
+      GITEA__database__NAME={{ gitea_database_name }}      
+      GITEA__database__USER={{ gitea_database_user }}      
+      GITEA__database__PASSWD={{ gitea_database_pass }}
+      GITEA__service__DISABLE_REGISTRATION=true
+      GITEA__service__EMAIL_DOMAIN_ALLOWLIST={{ gitea['domain'] }}
+      GITEA__service__DEFAULT_USER_VISIBILITY=private
+      GITEA__service__DEFAULT_ORG_VISIBILITY=private
+      GITEA__repository__DEFAULT_PRIVATE=private
+      GITEA__repository__FORCE_PRIVATE=true
+      GITEA__openid__ENABLE_OPENID_SIGNIN=false
+      GITEA__openid__ENABLE_OPENID_SIGNUP=false
+      GITEA__cors__ENABLED=true
+      GITEA__cors__ALLOW_DOMAIN={{ gitea['domain'] }}
+    ports:
+      - "222:22"
+      - "3000:3000"
+    networks:
+      - name: "{{ gitea['network'] }}"
+    volumes:
+      - "{{ gitea['data_volume'] }}:/data"
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+
+- name: Copy Gitea template files to remote server
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "/tmp/{{ item.dest }}"
+  loop:
+    - { src: "home.tmpl", dest: "home.tmpl" }
+    - { src: "head_navbar.tmpl", dest: "head_navbar.tmpl" }
+
+- name: Ensure template directory exists inside Gitea Docker container (non-root user)
+  community.docker.docker_container_exec:
+    container: "{{ gitea['container_name'] }}"
+    command: mkdir -p /data/gitea/templates/base
+
+- name: Copy home template into Gitea Docker container (non-root user)
+  community.docker.docker_container_copy_into:
+    container: "{{ gitea['container_name'] }}"
+    path: "/tmp/home.tmpl"
+    container_path: "/data/gitea/templates/home.tmpl"
+
+- name: Copy head_navbar template into Gitea Docker container (non-root user)
+  community.docker.docker_container_copy_into:
+    container: "{{ gitea['container_name'] }}"
+    path: "/tmp/head_navbar.tmpl"
+    container_path: "/data/gitea/templates/base/head_navbar.tmpl"
+
+- name: Clean up temporary template files from the remote server
+  file:
+    path: "/tmp/{{ item.dest }}"
+    state: absent
+  loop:
+    - { dest: "home.tmpl" }
+    - { dest: "head_navbar.tmpl" }
+
+- name: Create Gitea database if it does not exist
+  community.docker.docker_container_exec:
+    container: "{{ postgres['container_name'] }}"
+    command: |
+      psql -U {{ postgres_db_user  }} -d postgres -tc "SELECT 1 FROM pg_databases WHERE datname = '{{ gitea_database_name }}';" | grep -q 1 || psql -U {{ postgres_db_user }} -c "CREATE DATABASE '{{ gitea_database_name }}';"
+
