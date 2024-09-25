@@ -193,7 +193,7 @@ After updating the playbook, run it using the following command:
 ```bash
 ansible-playbook -i inventory.yml site.yml 
 ```
-If you see the output `pong`, the connection with your VPS is successful.
+🎉 If you see the output `pong`, the connection with your VPS is successful.
 
 ### Ansible Configuration
 
@@ -376,7 +376,7 @@ After updating the configuration file, you can run the playbook without the `--a
 ansible-playbook -i inventory.yml site.yml
 ```
 
-If the playbook runs successfully, you should see the required packages installed on your VPS.
+🎉 If the playbook runs successfully, you should see the required packages installed on your VPS.
 
 |🎯 At this point, our `site.yml` playbook should look like this|
 |---------------------------------------------------------------|
@@ -538,7 +538,7 @@ After updating the playbook, run it using the following command:
 ansible-playbook -i inventory.yml site.yml
 ```
 
-If the playbook runs successfully, Docker will be installed on your VPS.
+🎉 If the playbook runs successfully, Docker will be installed on your VPS.
 
 |🎯 At this point, our `site.yml` playbook should look like this|
 |---------------------------------------------------------------|
