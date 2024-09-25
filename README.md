@@ -1377,7 +1377,9 @@ To apply the changes we need to run the `packages.yml` playbook which includes t
 ansible-playbook -i inventory.yml packages.yml
 ```
 
-But if we want to be more specific and run only a specific task in the playbook, we can add tags to our tasks in the playbook and run only the tasks with the specified tags. Let's do this with the `caddy.yml` tasks.
+Now, is time to introduce some other Ansible concepts. As you can see often we do changes in our Caddy configuration, but we run the whole `packages.yml` playbook to apply the changes. This is not a problem when we have a small number of tasks, but as the number of tasks grows, it can be time-consuming to run the entire playbook.
+
+Therefore, we can use tags to run only specific tasks in the playbook. 
 
 In `packages.yml` playbook, add the `caddy` tag to the `caddy.yml` tasks:
 
@@ -1418,7 +1420,7 @@ http://pgadmin.<your_domain>
 ```
 
 |🎯 At this point, our `services.yml` playbook should look like this|
-|---------------------------------------------------------------|
+|-------------------------------------------------------------------|
 
 ```yaml
 ---
