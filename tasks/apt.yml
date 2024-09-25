@@ -23,6 +23,7 @@
     - ca-certificates           # CA certificates
     - python3-full              # Latest Python 3
     - python3-pip               # Python package installer
+    - python3-psycopg2          # PostgreSQL adapter for Python
     - fail2ban                  # Intrusion prevention software
     - gnupg                     # GnuPG
     - curl                      # Transfer data with URLs
