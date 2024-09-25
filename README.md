@@ -1352,7 +1352,7 @@ ansible-playbook -i inventory.yml services.yml
 
 If the playbook runs successfully, PgAdmin will be installed and configured in a Docker container on your VPS.
 
-Now, we want to access the PgAdmin interface using. To do this, we need to configure Caddy to act as a reverse proxy for the PgAdmin container.
+Now, we want to access the PgAdmin web interface. To do this, we need to configure Caddy to act as a reverse proxy for the PgAdmin container.
 
 1. Update the `Caddyfile.j2` template file to include a reverse proxy configuration for PgAdmin:
 
