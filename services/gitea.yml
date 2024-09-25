@@ -69,9 +69,3 @@
     - { dest: "home.tmpl" }
     - { dest: "head_navbar.tmpl" }
 
-- name: Create Gitea database if it does not exist
-  community.docker.docker_container_exec:
-    container: "{{ postgres['container_name'] }}"
-    command: |
-      psql -U {{ postgres_db_user  }} -d postgres -tc "SELECT 1 FROM pg_databases WHERE datname = '{{ gitea_database_name }}';" | grep -q 1 || psql -U {{ postgres_db_user }} -c "CREATE DATABASE '{{ gitea_database_name }}';"
-

@@ -1576,16 +1576,21 @@ CREATE ROLE your_gitea_username WITH LOGIN PASSWORD 'your_password';
 CREATE DATABASE your_database_name WITH OWNER your_gitea_username TEMPLATE template0 ENCODING UTF8 LC_COLLATE 'en_US.UTF-8' LC_CTYPE 'en_US.UTF-8';
 ```
 
-After creating the database and user, we can access the Gitea interface using the following URL:
+After creating the database and user, is time to deploy our Gitea container. Run the services playbook:
+
+```bash
+ansible-playbook -i inventory.yml services.yml
+```
+
+🎉 If the playbook runs successfully, Gitea will be installed and configured in a Docker container on your VPS. To access Gitea using the domain name, you can use the following URL in your web browser:
 
 ```bash
 http://gitea.<your_domain>
 ```
 When we access Gitea for the first time, we need to configure the instance settings. You don't have to change anything in the database settings, because we already configured them in the `gitea.yml` tasks.
 
-
 |🎯 At this point, our `service.yml` playbook should look like this|
-|---------------------------------------------------------------|
+|------------------------------------------------------------------|
 
 ```yaml
 ---
