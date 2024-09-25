@@ -57,7 +57,7 @@
         enabled: yes
 
     - name: Copy daemon.json
-      ansible.builtin.template:
+      ansible.builtin.copy:
         dest: "/etc/docker/daemon.json"
         src: "daemon.json"
       notify: restart_docker
