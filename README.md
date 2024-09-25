@@ -30,6 +30,7 @@ This repository provides a comprehensive guide to create an Ansible project and 
         * [Docker Networks](#docker-networks)
         * [PostgreSQL Installation](#postgresql-installation)
         * [PgAdmin Installation](#pgadmin-installation)
+        * [Gitea Installation](#gitea-installation)
 * [Resources](#resources)
 * [Feedback](#feedback)
 
@@ -290,42 +291,7 @@ mkdir -p roles/packages/tasks
 
 3. Inside `roles/packages/tasks/`, create a new file named `apt.yml` with the following content:
 
-```yaml
----
-- name: Set timezone to Europe/Bucharest
-  community.general.timezone:
-    name: Europe/Bucharest      # Change this to your timezone
-
-- name: Run "apt-get update"
-  ansible.builtin.apt:
-    update_cache: yes
-
-- name: Update all packages to their latest version
-  ansible.builtin.apt:
-    name: "*"
-    state: latest
-
-- name: Install required packages
-  ansible.builtin.apt:
-    pkg:
-    - debian-keyring            # Debian keyring
-    - debian-archive-keyring    # Debian archive keyring
-    - build-essential           # Development tools
-    - bash-completion           # Bash completion
-    - apt-transport-https       # HTTPS support for APT
-    - ca-certificates           # CA certificates
-    - python3-full              # Latest Python 3
-    - python3-pip               # Python package installer
-    - fail2ban                  # Intrusion prevention software
-    - gnupg                     # GnuPG
-    - curl                      # Transfer data with URLs
-    - procps                    # Process utilities    
-    - file                      # File type identification
-    - ufw                       # Uncomplicated Firewall
-    - git                       # Version control system
-    - vim                       # Text editor
-
-```
+[apt.yml](./tasks/apt.yml)
 
 4. Create a new file (if it doesn't exist) named `main.yml` in the `roles/packages/tasks/` directory with the following content:
 
@@ -422,73 +388,9 @@ If the playbook runs successfully, you should see the required packages installe
 
 Docker is a popular platform for developing, shipping, and running applications in containers. In this section, we will automate the installation of Docker on our VPS using Ansible.
 
-1. Create a new file named `docker.yml` in the `roles/packages/tasks/` directory with the following content:
+1. Create a new file named `docker.yml` in the `roles/packages/tasks/` directory with the content from the following file:
 
-```yaml
-- name: Add Docker GPG apt Key
-  vars:
-    keyrings: /etc/apt/keyrings
-    apt_repo: https://download.docker.com/linux/ubuntu
-  block:
-    - name: Create /etc/apt/keyrings directory
-      ansible.builtin.file:
-        path: "{{ keyrings }}"
-        state: directory
-        mode: '0755'
-
-    - name: Download docker gpg key
-      ansible.builtin.get_url:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        dest: "{{ keyrings }}/docker.asc"
-
-    - name: Add docker apt repository
-      ansible.builtin.apt_repository:
-        repo: "deb [arch=amd64 signed-by={{ keyrings }}/docker.asc] {{ apt_repo }} {{ ansible_distribution_release }} stable"
-        filename: docker
-        state: present
-
-- name: Install the latest version of Docker engine
-  block:
-    - name: Install docker package
-      ansible.builtin.package:
-        name:
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
-          - docker-buildx-plugin
-          - docker-compose-plugin
-        state: present
-
-    - name: Create docker group
-      ansible.builtin.group:
-        name: docker
-        state: present
-
-    - name: Add VPS user to docker group
-      ansible.builtin.user:
-        name: "{{ username }}"
-        groups:
-          - docker
-        append: yes
-        state: present
-
-    - name: Enable docker service
-      ansible.builtin.service:
-        name: docker.service
-        enabled: yes
-
-    - name: Enable containerd service
-      ansible.builtin.service:
-        name: containerd.service
-        enabled: yes
-
-    - name: Copy daemon.json
-      ansible.builtin.template:
-        dest: "/etc/docker/daemon.json"
-        src: "daemon.json"
-      notify: restart_docker
-
-```
+[docker.yml](./tasks/docker.yml)
 
 2. Create a new file named `daemon.json` in the `roles/packages/files/` directory with the following content:
 
@@ -624,59 +526,9 @@ This way, you can securely store and manage sensitive data in your Ansible playb
 
 Caddy is a powerful, extensible web server that can be used to serve static websites, reverse proxy services, and more. In this section, we will use Ansible to install Caddy on our VPS.
 
-1. Create a new file named `caddy.yml` in the `roles/packages/tasks/` directory with the following content:
+1. Create a new file named `caddy.yml` in the `roles/packages/tasks/` directory with content from the following file:
 
-```yaml
----
-- name: Add Caddy GPG apt Key
-  vars:
-    keyrings: /usr/share/keyrings
-    apt_repo: https://dl.cloudsmith.io/public/caddy/testing/deb/debian  
-  block:
-    - name: Download Caddy gpg key
-      ansible.builtin.get_url:
-        url: https://dl.cloudsmith.io/public/caddy/stable/gpg.key        
-        dest: "{{ keyrings }}/caddy-stable-archive-keyring.asc"
-
-
-    - name: Add Caddy apt repository
-      ansible.builtin.apt_repository:
-        repo: "deb [signed-by={{ keyrings }}/caddy-stable-archive-keyring.asc] {{ apt_repo }} any-version main"
-        state: present
-
-    - name: Add Caddy source repository
-      ansible.builtin.apt_repository:
-        repo: "deb-src [signed-by={{ keyrings }}/caddy-stable-archive-keyring.asc] {{ apt_repo }} any-version main"
-        state: present
-
-- name: Install Caddy package
-  ansible.builtin.package:
-    name: caddy
-    state: present
-
-- name: Enable caddy service
-  ansible.builtin.service:
-    name: caddy.service
-    enabled: yes
-
-- name: Copy Caddy configuration file
-  ansible.builtin.template:
-    src: Caddyfile.j2
-    dest: /etc/caddy/Caddyfile
-  notify: restart_caddy
-
-- name: Create Caddy web root directory
-  ansible.builtin.file:
-    path: /var/www/html
-    state: directory
-    mode: '0755'
-
-- name: Copy index.html file
-    ansible.builtin.copy:
-        src: index.html
-        dest: /var/www/html/index.html
-
-```
+[caddy.yml](./tasks/caddy.yml)
 
 2. Now, we will create a basic Caddy configuration file. Create a new file named `Caddyfile.j2` in the `roles/packages/templates/` directory with the following content:
 
@@ -689,20 +541,9 @@ Caddy is a powerful, extensible web server that can be used to serve static webs
 
 This configuration file defines a simple Caddy server that serves files from the `/var/www/html` directory. 
 
-3. Let's create a simple HTML file to serve using Caddy. Create a new file named `index.html` in the `roles/packages/files/` directory with the following content:
+3. Let's create a simple HTML file to serve using Caddy. Create a new file named `index.html` in the `roles/packages/files/` and copy the content from the following file: 
 
-```html
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Welcome to Caddy</title>
-</head>
-<body>
-    <h1>Welcome to Caddy</h1>
-    <p>This is a test page served by Caddy.</p>
-</body>
-</html>
-```
+[index.html](./files/index.html)
 
 4. Create a new file `main.yml` in the `roles/packages/handlers/` directory with the following content:
 
@@ -785,33 +626,9 @@ mkdir -p roles/security/tasks
 mkdir -p roles/security/handlers
 ```
 
-2. Inside `roles/security/tasks/`, create a new file named `ssh.yml` with the following content:
+2. Inside `roles/security/tasks/`, create a new file named `ssh.yml` with the content from the following file:
 
-```yaml
----
-- name: Harden SSH Configuration
-  ansible.builtin.blockinfile:
-    path: /etc/ssh/sshd_config
-    block: |
-      Protocol 2
-      PermitRootLogin no
-      PasswordAuthentication no
-      AllowUsers {{ username }}
-      Port {{ ssh_port }}
-      PubkeyAuthentication yes
-      ClientAliveInterval 300
-      ClientAliveCountMax 0
-      MaxAuthTries 3
-      LogLevel VERBOSE
-      MaxStartups 10:30:60
-    backup: yes
-  notify: "restart_ssh"
-  changed_when: true
-
-- name: Update Ansible to use new SSH port
-  ansible.builtin.set_fact:
-    ansible_port: "{{ ssh_port }}"
-```
+[ssh.yml](./tasks/ssh.yml)
 
 This task hardens the SSH configuration by setting the following options:
 
@@ -962,38 +779,9 @@ The second task updates the Ansible port to use the new SSH port defined in the 
 
 A firewall is a network security system that monitors and controls incoming and outgoing network traffic based on predetermined security rules. In this section, we will use Ansible to configure the Uncomplicated Firewall (UFW) on our VPS.
 
-1. Inside `roles/security/tasks/`, create a new file named `firewall.yml` with the following content:
+1. Inside `roles/security/tasks/`, create a new file named `firewall.yml` with content from the following file:
 
-```yaml
---- 
-- name: Ensure UFW is installed
-  ansible.builtin.apt:
-    name: ufw
-    state: present
-
-- name: Allow SSH connections
-  community.general.ufw:
-    rule: allow
-    port: "{{ ssh_port }}"
-    proto: tcp
-
-- name: Allow Http connections
-  community.general.ufw:
-    rule: allow
-    port: '80'
-    proto: tcp
-
-- name: Allow Https connections
-  community.general.ufw:
-    rule: allow
-    port: '443'
-    proto: tcp
-
-- name: Deny everything and enable UFW
-  community.general.ufw:
-    state: enabled
-    policy: deny
-```
+[firewall.yml](./tasks/firewall.yml)
 
 2. Update the `site.yml` playbook to include the `firewall` role:
 
@@ -1078,31 +866,9 @@ Below are some useful commands to manage UFW:
 
 Fail2ban is an intrusion prevention software framework that protects computer servers from brute-force attacks. In this section, we will use Ansible to install and configure Fail2ban on our VPS.
 
-1. Inside `roles/security/tasks/`, create a new file named `fail2ban.yml` with the following content:
+1. Inside `roles/security/tasks/`, create a new file named `fail2ban.yml` with content from the following file:
 
-```yaml
----
-- name: Ensure Fail2ban is installed
-  ansible.builtin.apt:
-    name: fail2ban
-    state: present
-
-- name: Copy fail2ban configuration
-  copy:
-    dest: /etc/fail2ban/jail.local
-    content: |
-        [sshd]
-        enabled = true             
-        port = ssh                
-        filter = sshd            
-        logpath = /var/log/auth.log
-        maxretry = 3
-        bantime = 3600
-    owner: root
-    group: root
-    mode: '0644'
-  notify: restart_fail2ban
-```
+[fail2ban.yml](./tasks/fail2ban.yml)
 
 2. Append the following content to the `main.yml` file in the `roles/security/handlers/` directory:
 
@@ -1236,6 +1002,8 @@ Now, let's move on to configuring the services.
 
 Docker networks allow containers to communicate with each other securely. In this section, we will use Ansible to create Docker networks on our VPS.
 
+Why we want two networks? We will create a public network that will be used by services that need to be accessed from the internet, and a private network that will be used by services that should not be exposed to the internet. Also, using multiple networks allows us to isolate services and control the traffic between them.
+
 2. Inside `roles/services/tasks/`, create a new file named `networks.yml` with the following content:
 
 ```yaml
@@ -1333,53 +1101,9 @@ docker network ls
 
 PostgreSQL is a powerful, open-source relational database management system. In this section, we will use Ansible to install and configure PostgreSQL in a Docker container on our VPS.
 
-1. Inside `roles/services/tasks/`, create a new file named `postgresql.yml` with the following content:
+1. Inside `roles/services/tasks/`, create a new file named `postgresql.yml` with content from the following file:
 
-```yaml
----
-- name: Create postgres volume
-  community.docker.docker_volume:
-    name: "{{ postgres['data_volume'] }}"
-
-- name: Create postgres container
-  community.docker.docker_container:
-    name: "{{ postgres['container_name'] }}"
-    image: "{{ postgres['container_image'] }}"
-    hostname: "{{ postgres['container_hostname'] }}"
-    restart_policy: unless-stopped
-    image_name_mismatch: recreate
-    recreate: true
-    env:
-      POSTGRES_USER: "{{ postgres_db_user }}"
-      POSTGRES_PASSWORD: "{{ postgres_db_pass }}"
-    networks:
-      - name: "{{ postgres['network'] }}"
-    volumes:
-      - "{{ postgres['data_volume'] }}:/var/lib/postgresql/data"
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "{{ postgres_db_user }}"]
-      interval: 1m30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-
-- name: Connect postgresql container to public network
-  community.docker.docker_network:
-    name: "{{ docker_networks[0].name }}"
-    connected:
-      - postgres
-    appends: true
-
-- name: Wait for PostgreSQL to become available
-  community.docker.docker_container_exec:
-    container: "{{ postgres['container_name'] }}"
-    command: bash -c "until pg_isready -U {{ postgres_db_user }}; do sleep 1; done"
-  register: result
-  until: result is succeeded
-  retries: 30
-  delay: 1
-    
-```
+[postgresql.yml](./services/postgresql.yml)
 
 2. Next step is to define the variables used in the `postgresql.yml` tasks. Update the `group_vars/all.yml` file with the following content:
 
@@ -1546,31 +1270,9 @@ ansible-playbook -i inventory.yml site.yml
 
 PgAdmin is a popular open-source administration and development platform for PostgreSQL. In this section, we will use Ansible to install and configure PgAdmin in a Docker container on our VPS.
 
-1. Inside `roles/services/tasks/`, create a new file named `pgadmin.yml` with the following content:
+1. Inside `roles/services/tasks/`, create a new file named `pgadmin.yml` with content from the following file:
 
-```yaml
----
-- name: Create pgadmin volume
-  community.docker.docker_volume:
-    name: "{{ pgadmin['data_volume'] }}"
-
-- name: Create pgadmin container
-  community.docker.docker_container:
-    name: "{{ pgadmin['container_name'] }}"
-    image: "{{ pgadmin['container_image'] }}"
-    hostname: "{{ pgadmin['container_hostname'] }}"
-    restart_policy: unless-stopped
-    recreate: true
-    env:
-      PGADMIN_DEFAULT_EMAIL: "{{ pgadmin_email }}"
-      PGADMIN_DEFAULT_PASSWORD: "{{ pgadmin_password }}"
-    ports:
-        - "8081:80"
-    networks:
-      - name: "{{ pgadmin['network'] }}"
-    volumes:
-      - "{{ pgadmin['data_volume'] }}:/var/lib/pgadmin"
-```
+[pgadmin.yml](./tasks/pgadmin.yml)
 
 2. Next step is to define the variables used in the `pgadmin.yml` tasks. Update the `group_vars/all.yml` file with the following content:
 
@@ -1618,14 +1320,70 @@ ansible-playbook -i inventory.yml services.yml
 
 If the playbook runs successfully, PgAdmin will be installed and configured in a Docker container on your VPS.
 
-To access PgAdmin, you can use the following URL in your web browser:
+Now, we want to access the PgAdmin interface using. To do this, we need to configure Caddy to act as a reverse proxy for the PgAdmin container.
 
-```bash
-http://<vps_ip_or_domain>
+1. Update the `Caddyfile.j2` template file to include a reverse proxy configuration for PgAdmin:
+
+```jinja
+<your_domain> {
+    root * /var/www/html
+    file_server
+}
+
+pgadmin.<your_domain> {
+    reverse_proxy localhost:8081 {
+        header_up X-Scheme {scheme}
+    }
+}
 ```
 
-You can log in using the email and password defined in the `secrets.yml` file.
+This configuration file defines a reverse proxy for the PgAdmin container running on port 8081. The `header_up` directive is used to set the `X-Scheme` header to the scheme of the request.
 
+To apply the changes we need to run the `packages.yml` playbook which includes the `caddy.yml` tasks:
+
+```bash
+ansible-playbook -i inventory.yml packages.yml
+```
+
+But if we want to be more specific and run only a specific task in the playbook, we can add tags to our tasks in the playbook and run only the tasks with the specified tags. Let's do this with the `caddy.yml` tasks.
+
+In `packages.yml` playbook, add the `caddy` tag to the `caddy.yml` tasks:
+
+```yaml
+---
+- name: Configure VPS Packages
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  become: true
+  tasks:
+
+    - ansible.builtin.import_role:
+        name: packages
+      tags: packages
+
+    - ansible.builtin.import_role:
+        name: packages
+        tasks_from: docker.yml
+      tags: docker
+
+    - ansible.builtin.import_role:
+        name: packages
+        tasks_from: caddy.yml
+      tags: caddy
+```
+
+Now, you can run the `packages.yml` playbook with the `caddy` tag to apply the changes:
+
+```bash
+ansible-playbook -i inventory.yml packages.yml --tags caddy
+```
+
+After this, you should be able to login to PgAdmin using the following URL:
+
+```bash
+http://pgadmin.<your_domain>
+```
 
 |🎯 At this point, our `services.yml` playbook should look like this|
 |---------------------------------------------------------------|
@@ -1649,23 +1407,6 @@ You can log in using the email and password defined in the `secrets.yml` file.
     - ansible.builtin.import_role:
         name: services
         tasks_from: pgadmin.yml
-```
-
-Now, we want to access the PgAdmin interface using a domain name instead of an IP address. To do this, we need to configure Caddy to act as a reverse proxy for the PgAdmin container.
-
-1. Update the `Caddyfile.j2` template file to include a reverse proxy configuration for PgAdmin:
-
-```jinja
-<your_domain> {
-    root * /var/www/html
-    file_server
-}
-
-pgadmin.<your_domain> {
-    reverse_proxy localhost:8081 {
-        header_up X-Scheme {scheme}
-    }
-}
 ```
 
 2. After updating the `Caddyfile.j2` template file, run the `site.yml` playbook to apply the changes:
@@ -1705,4 +1446,134 @@ http://pgadmin.<your_domain>
     - ansible.builtin.import_role:
         name: services
         tasks_from: pgadmin.yml
+```
+
+#### Gitea Installation
+
+Gitea is a self-hosted Git service that is similar to GitHub. In this section, we will use Ansible to install and configure Gitea in a Docker container on our VPS.
+
+1. Inside `roles/services/tasks/`, create a new file named `gitea.yml` with content from the following file:
+
+[gitea.yml](./tasks/gitea.yml)
+
+A lot of things are happening in this task. We are creating a Docker volume for Gitea, creating a Docker container for Gitea, setting environment variables for Gitea configuration, exposing ports for SSH and HTTP access, and copying custom templates for the Gitea interface.
+
+Here is the list with the environment variables used in the Gitea container and what they do:
+
+- `GITEA__database__DB_TYPE=postgres`: Specifies the database type (PostgreSQL).
+- `GITEA__database__HOST=postgres`: Specifies the database host (PostgreSQL container).
+- `GITEA__database__NAME={{ gitea_database_name }}`: Specifies the database name.
+- `GITEA__database__USER={{ gitea_database_user }}`: Specifies the database user.
+- `GITEA__database__PASSWD={{ gitea_database_pass }}`: Specifies the database password.
+- `GITEA__service__DISABLE_REGISTRATION=true`: Disables user registration.
+- `GITEA__service__EMAIL_DOMAIN_ALLOWLIST={{ gitea['domain'] }}`: Specifies the allowed email domain.
+- `GITEA__service__DEFAULT_USER_VISIBILITY=private`: Sets the default user visibility to private.
+- `GITEA__service__DEFAULT_ORG_VISIBILITY=private`: Sets the default organization visibility to private.
+- `GITEA__repository__DEFAULT_PRIVATE=private`: Sets the default repository visibility to private.
+- `GITEA__repository__FORCE_PRIVATE=true`: Forces repositories to be private.
+- `GITEA__openid__ENABLE_OPENID_SIGNIN=false`: Disables OpenID sign-in.
+- `GITEA__openid__ENABLE_OPENID_SIGNUP=false`: Disables OpenID sign-up.
+- `GITEA__cors__ENABLED=true`: Enables CORS.
+- `GITEA__cors__ALLOW_DOMAIN={{ gitea['domain'] }}`: Specifies the allowed domain for CORS.
+
+2. Next step is to define the variables used in the `gitea.yml` tasks. Update the `group_vars/all.yml` file with the following content:
+
+```yaml
+# Gitea Container Configuration
+gitea:
+    data_volume: gitea_data
+    container_image: gitea/gitea:latest
+    container_name: gitea
+    container_hostname: gitea
+    network: public
+    domain: gitea.<your_domain>
+```
+
+For the `gitea_database_name`, `gitea_database_user`, and `gitea_database_pass` variables, we will use the `secrets.yml` file to store the sensitive data.
+
+Edit the `secrets.yml` file using `ansible-vault edit secrets.yml` and add the following content:
+
+```yaml
+gitea_database_name: gitea
+gitea_database_user: gitea
+gitea_database_pass: mysecretpassword
+```
+
+3. We can customize a little bit the Gitea interface. To do this we need to create two custom templates. Create a new folder named `files` in the `services` role directory and two files `home.tmpl` an `head_navbar.tmpl` with the content from the following files:
+
+- [home.tmpl](./files/home.tmpl) 
+- [head_navbar.tmpl](./files/head_navbar.tmpl)
+
+4. Update the `services.yml` playbook to include the `gitea` tasks:
+
+```yaml
+---
+- name: Configure VPS Services
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    # The other tasks are above
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: gitea.yml
+```
+
+5. Now, we need to expose the Gitea interface using Caddy as a reverse proxy. Update the `Caddyfile.j2` template file to include a reverse proxy configuration for Gitea:
+
+```jinja
+gitea.<your_domain> {
+    reverse_proxy localhost:3000
+}
+```
+
+6. After updating the `Caddyfile.j2` template file, run the `site.yml` playbook to apply the changes:
+
+```bash
+ansible-playbook -i inventory.yml packages.yml -t caddy
+```
+
+7. Before accessing Gitea, we need to initialize the database. To do this, we need to open our pgAdmin interface and create a new database, and user with the same values that we defined in the `gitea_database_name` and `gitea_database_user` variables.
+
+```sql
+CREATE ROLE your_gitea_username WITH LOGIN PASSWORD 'your_password';
+CREATE DATABASE your_database_name WITH OWNER your_gitea_username TEMPLATE template0 ENCODING UTF8 LC_COLLATE 'en_US.UTF-8' LC_CTYPE 'en_US.UTF-8';
+```
+
+After creating the database and user, we can access the Gitea interface using the following URL:
+
+```bash
+http://gitea.<your_domain>
+```
+When we access Gitea for the first time, we need to configure the instance settings. You don't have to change anything in the database settings, because we already configured them in the `gitea.yml` tasks.
+
+
+|🎯 At this point, our `service.yml` playbook should look like this|
+|---------------------------------------------------------------|
+
+```yaml
+---
+- name: Configure VPS Services
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: networks.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: postgresql.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: pgadmin.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: gitea.yml
 ```
