@@ -1781,4 +1781,48 @@ ansible-playbook -i inventory.yml services.yml
 https://yacht.<your_domain>
 ```
 
+You can login to Yacht using the following credentials:
+
+- Username: `admin@yacht.local`
+- Password: `pass`
+
+After you login, you can update the password and user email in the `Settings` section.
+
+
+|🎯 At this point, our `service.yml` playbook should look like this|
+|------------------------------------------------------------------|
+
+```yaml
+---
+- name: Configure VPS Services
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: networks.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: postgresql.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: pgadmin.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: gitea.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: umami.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: yacht.yml
+```
+
 

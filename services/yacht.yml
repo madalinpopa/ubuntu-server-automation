@@ -15,5 +15,5 @@
     networks:
       - name: "{{ yacht['network'] }}"
     volumes:
-      - "{{ data_volume }}:/config"
+      - "{{ yacht['data_volume'] }}:/config"
       - /var/run/docker.sock:/var/run/docker.sock
