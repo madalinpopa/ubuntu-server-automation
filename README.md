@@ -1932,3 +1932,47 @@ ansible-playbook -i inventory.yml services.yml
 https://notify.<your_domain>
 ```
 
+You can login to Notify using the credentials you defined in the `secrets.yml` file.
+
+|🎯 At this point, our `service.yml` playbook should look like this|
+|------------------------------------------------------------------|
+
+```yaml
+---
+- name: Configure VPS Services
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: networks.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: postgresql.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: pgadmin.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: gitea.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: umami.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: yacht.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: notify.yml
+```
+
+
+

@@ -18,7 +18,7 @@
       NTFY_BEHIND_PROXY: "true"
       NTFY_ATTACHMENT_CACHE_DIR: "/var/lib/ntfy/attachments"
       NTFY_ENABLE_LOGIN: "true"
-      NTFY_WEB_ROOT: disable
+      # NTFY_WEB_ROOT: disable
     ports:
       - "2586:80"
     networks:
@@ -26,3 +26,10 @@
     volumes:
       - "{{ notify['data_volume'] }}:/var/lib/ntfy"
     command: serve
+
+- name: Create admin user
+  community.docker.docker_container_exec:
+    container: "{{ notify['container_name'] }}"
+    command: ntfy user add --role=admin {{ notify_admin_user }}
+    env:
+      NTFY_PASSWORD: "{{ notify_admin_pass }}"
