@@ -1,31 +1,4 @@
 ---
-- name: Create semaphore container
-  community.docker.docker_container:
-    name: "{{ semaphore['container_name'] }}"
-    image: "{{ semaphore['container_image'] }}"
-    hostname: "{{ semaphore['container_hostname'] }}"
-    restart_policy: unless-stopped
-    image_name_mismatch: recreate
-    recreate: true
-    env:
-      SEMAPHORE_DB_USER: "{{ semaphore_db_user }}"
-      SEMAPHORE_DB_PASS: "{{ semaphore_db_pass }}"
-      SEMAPHORE_DB_HOST: postgres  
-      SEMAPHORE_DB_PORT: "5432"
-      SEMAPHORE_DB_DIALECT: postgres 
-      SEMAPHORE_DB: "{{ semaphore_db_name }}"
-      SEMAPHORE_PLAYBOOK_PATH: "/tmp/semaphore/"
-      SEMAPHORE_ADMIN_PASSWORD: "{{ semaphore_admin_pass }}"
-      SEMAPHORE_ADMIN_NAME: "{{ semaphore_admin_name }}"
-      SEMAPHORE_ADMIN_EMAIL: "{{ semaphore_admin_email }}"
-      SEMAPHORE_ADMIN: "{{ semaphore_admin_user }}"
-      SEMAPHORE_ACCESS_KEY_ENCRYPTION: "{{ semaphore_access_key_encryption }}"
-      TZ: Europe/Bucharest
-    ports:
-      - "3002:3000"
-    networks:
-      - name: "{{ semaphore['network'] }}"
-
 - name: Create application database
   community.postgresql.postgresql_db:
     name: "{{ semaphore_db_name }}"
@@ -69,3 +42,31 @@
     login_password: "{{ postgres_db_pass }}"
     login_host: localhost
   no_log: True
+
+- name: Create semaphore container
+  community.docker.docker_container:
+    name: "{{ semaphore['container_name'] }}"
+    image: "{{ semaphore['container_image'] }}"
+    hostname: "{{ semaphore['container_hostname'] }}"
+    restart_policy: unless-stopped
+    image_name_mismatch: recreate
+    recreate: true
+    env:
+      SEMAPHORE_DB_USER: "{{ semaphore_db_user }}"
+      SEMAPHORE_DB_PASS: "{{ semaphore_db_pass }}"
+      SEMAPHORE_DB_HOST: postgres  
+      SEMAPHORE_DB_PORT: "5432"
+      SEMAPHORE_DB_DIALECT: postgres 
+      SEMAPHORE_DB: "{{ semaphore_db_name }}"
+      SEMAPHORE_PLAYBOOK_PATH: "/tmp/semaphore/"
+      SEMAPHORE_ADMIN_PASSWORD: "{{ semaphore_admin_pass }}"
+      SEMAPHORE_ADMIN_NAME: "{{ semaphore_admin_name }}"
+      SEMAPHORE_ADMIN_EMAIL: "{{ semaphore_admin_email }}"
+      SEMAPHORE_ADMIN: "{{ semaphore_admin_user }}"
+      SEMAPHORE_ACCESS_KEY_ENCRYPTION: "{{ semaphore_access_key_encryption }}"
+      TZ: Europe/Bucharest
+    ports:
+      - "3002:3000"
+    networks:
+      - name: "{{ semaphore['network'] }}"
+
