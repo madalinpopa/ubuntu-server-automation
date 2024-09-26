@@ -1839,7 +1839,7 @@ The publishing of messages can be done by a simple curl command, or using email,
 Here is an example from the Ntfy documentation on how to publish a message using curl when you are low on space on your server:
 
 ```bash
-echo "#!/bin/bash
+#!/bin/bash
 
 mingigs=10
 avail=$(df | awk '$6 == "/" && $4 < '$mingigs' * 1024*1024 { print $4/1024/1024 }')
