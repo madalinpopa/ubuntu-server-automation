@@ -24,7 +24,7 @@
     ports:
       - "3002:3000"
     networks:
-      - name: "{{ sempahore['network'] }}"
+      - name: "{{ semaphore['network'] }}"
 
 - name: Create application database
   community.postgresql.postgresql_db:
