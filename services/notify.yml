@@ -17,6 +17,7 @@
       NTFY_AUTH_DEFAULT_ACCESS: "deny-all"
       NTFY_BEHIND_PROXY: "true"
       NTFY_ATTACHMENT_CACHE_DIR: "/var/lib/ntfy/attachments"
+      NTFY_UPSTREAM_BASE_URL: https://ntfy.sh # this is for iOS phones
       NTFY_ENABLE_LOGIN: "true"
       # NTFY_WEB_ROOT: disable
     ports:
