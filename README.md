@@ -2210,6 +2210,23 @@ You can login to Semaphore using the credentials you defined in the `secrets.yml
         tasks_from: semaphore.yml
 ```
 
+## Resources
+
+- [Ansible Documentation](https://docs.ansible.com/)
+- [Ansible Galaxy](https://galaxy.ansible.com/)
+- [Ansible Roles](https://docs.ansible.com/ansible/latest/user_guide/playbooks_reuse_roles.html)
+- [Ansible Tags](https://docs.ansible.com/ansible/latest/user_guide/playbooks_tags.html)
+- [Ansible Vault](https://docs.ansible.com/ansible/latest/user_guide/vault.html)
+- [Docker Documentation](https://docs.docker.com/)
+- [Caddy Documentation](https://caddyserver.com/docs/)
+- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
+- [PgAdmin Documentation](https://www.pgadmin.org/docs/)
+- [Gitea Documentation](https://docs.gitea.io/en-us/)
+- [Umami Documentation](https://umami.is/docs)
+- [Yacht Documentation](https://yacht.sh/docs/)
+- [Ntfy Documentation](https://ntfy.sh)
+- [Memos Documentation](
+- [Semaphore Documentation](https://docs.semaphoreui.com)
 
 
 
