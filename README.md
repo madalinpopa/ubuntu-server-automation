@@ -1865,11 +1865,21 @@ For more examples and integrations, check the Ntfy documentation.
 ```yaml
 # Notify Container Configuration
 notify:
+    data_volume: notify_data
     container_image: binwiederhier/ntfy:latest
     container_name: notify
     container_hostname: notify
     network: public
     domain: notify.<your_domain>
+```
+
+For `notify_admin_user` and `notify_admin_pass` variables, we will use the `secrets.yml` file to store the sensitive data.
+
+Edit the `secrets.yml` file using `ansible-vault edit secrets.yml` and add the following content:
+
+```yaml
+notify_admin_user: admin
+notify_admin_pass: mysecretpassword
 ```
 
 3. Update Caddy to expose the Notify interface using a reverse proxy. Update the `Caddyfile.j2` template file to include a reverse proxy configuration for Notify:
