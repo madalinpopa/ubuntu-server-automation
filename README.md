@@ -1910,3 +1910,15 @@ ansible-playbook -i inventory.yml packages.yml -t caddy
         tasks_from: notify.yml
 ```
 
+6. Run the `services.yml` playbook to install and configure Notify:
+
+```bash
+ansible-playbook -i inventory.yml services.yml
+```
+
+🎉 If the playbook runs successfully, Notify will be installed and configured in a Docker container on your VPS. To access Notify using the domain name, you can use the following URL in your web browser:
+
+```bash
+https://notify.<your_domain>
+```
+
