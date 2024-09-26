@@ -13,8 +13,8 @@
     recreate: true
     image_name_mismatch: recreate
     env:
-      - MEMOS_DRIVER=postgres
-      - MEMOS_DSN=user={{ memos_db_user }} password={{ memos_db_pass }} dbname={{ memos_db_name }} host=postgres sslmode=disable
+      MEMOS_DRIVER=postgres
+      MEMOS_DSN=user={{ memos_db_user }} password={{ memos_db_pass }} dbname={{ memos_db_name }} host=postgres sslmode=disable
     networks:
       - name: "{{ memos['network'] }}"
     ports:
