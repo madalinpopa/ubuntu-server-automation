@@ -1854,7 +1854,7 @@ if [ -n "$avail" ]; then
     $topicurl
 fi
 ```
-Deffenetly check the documentation for more examples and how to use it.
+For more examples and integrations, check the Ntfy documentation.
 
 1. Inside `roles/services/tasks/`, create a new file named `notify.yml` with content from the following file:
 
