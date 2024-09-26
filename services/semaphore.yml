@@ -11,10 +11,10 @@
       SEMAPHORE_DB_USER: "{{ semaphore_db_user }}"
       SEMAPHORE_DB_PASS: "{{ semaphore_db_pass }}"
       SEMAPHORE_DB_HOST: postgres  
-      SEMAPHORE_DB_PORT: 5432 
+      SEMAPHORE_DB_PORT: "5432"
       SEMAPHORE_DB_DIALECT: postgres 
       SEMAPHORE_DB: "{{ semaphore_db_name }}"
-      SEMAPHORE_PLAYBOOK_PATH: /tmp/semaphore/
+      SEMAPHORE_PLAYBOOK_PATH: "/tmp/semaphore/"
       SEMAPHORE_ADMIN_PASSWORD: "{{ semaphore_admin_pass }}"
       SEMAPHORE_ADMIN_NAME: "{{ semaphore_admin_name }}"
       SEMAPHORE_ADMIN_EMAIL: "{{ semaphore_admin_email }}"
