@@ -1,0 +1,23 @@
+---
+- name: Create memos data volume 
+  community.docker.docker_volume:
+    name: "{{ memos['data_volume'] }}"
+
+- name: Create application memos container
+  community.docker.docker_container:
+    name: "{{ memos_container_name }}"
+    image: "{{ memos_container_image }}"
+    hostname: "{{ memos_container_hostname }}"
+    pull: true
+    restart_policy: unless-stopped
+    recreate: true
+    image_name_mismatch: recreate
+    env:
+      - MEMOS_DRIVER=postgres
+      - MEMOS_DSN=user={{ memos_db_user }} password={{ memos_db_pass }} dbname={{ memos_db_name }} host=postgres sslmode=disable
+    networks:
+      - name: "{{ memos['network'] }}"
+    ports:
+      - "5230:5230"
+    volumes:
+      - "{{ memos['data_volume'] }}:/var/opt/memos"

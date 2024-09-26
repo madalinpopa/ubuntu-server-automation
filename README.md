@@ -34,9 +34,9 @@ This repository provides a comprehensive guide to create an Ansible project and 
         * [Umami Installation](#umami-installation)
         * [Yacht Installation](#yacht-installation)
         * [Notify Installation](#notify-installation)
+        * [Memos Installation](#memos-installation)
 * [Resources](#resources)
 * [Feedback](#feedback)
-
 
 ## Abstract
 
@@ -1973,6 +1973,67 @@ You can login to Notify using the credentials you defined in the `secrets.yml` f
         name: services
         tasks_from: notify.yml
 ```
+
+#### Memos Installation 
+
+Memos is a simple, self-hosted note-taking service. In this section, we will use Ansible to install and configure Memos in a Docker container on our VPS.
+
+1. Inside `roles/services/tasks/`, create a new file named `memos.yml` with content from the following file:
+
+- [memos.yml](./services/memos.yml)
+
+2. Next step is to define the variables used in the `memos.yml` tasks. Update the `group_vars/all.yml` file with the following content:
+
+```yaml
+# Memos Container Configuration
+memos:
+    data_volume: memos_data
+    container_image: neosmemo/memos:stable
+    container_name: memos
+    container_hostname: memos
+    network: public
+```
+
+For the `memos_db_user` and `memos_db_pass` variables, we will use the `secrets.yml` file to store the sensitive data.
+
+Edit the `secrets.yml` file using `ansible-vault edit secrets.yml` and add the following content:
+
+```yaml
+memos_db_user: memos
+memos_db_pass: mysecretpassword
+```
+
+3. Update Caddy to expose the Memos interface using a reverse proxy. Update the `Caddyfile.j2` template file to include a reverse proxy configuration for Memos:
+
+```jinja
+memo.<your_domain> {
+    reverse_proxy localhost:5230
+}
+```
+
+4. After updating the `Caddyfile.j2` template file, run the `packages.yml` playbook to apply the changes:
+
+```bash
+ansible-playbook -i inventory.yml packages.yml -t caddy
+```
+
+5. Update the `services.yml` playbook to include the `memos` tasks:
+
+```yaml
+---
+- name: Configure VPS Services
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    # The other tasks are above
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: memos.yml
+```
+
 
 
 
