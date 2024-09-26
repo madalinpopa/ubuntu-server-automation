@@ -2000,6 +2000,7 @@ Edit the `secrets.yml` file using `ansible-vault edit secrets.yml` and add the f
 
 ```yaml
 memos_db_user: memos
+memos_db_name: memos
 memos_db_pass: mysecretpassword
 ```
 
