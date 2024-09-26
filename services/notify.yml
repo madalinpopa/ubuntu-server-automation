@@ -1,0 +1,28 @@
+- name: Create notify volume
+  community.docker.docker_volume:
+    name: "{{ notify['data_volume'] }}"
+
+- name: Create ntfy container
+  community.docker.docker_container:
+    name: "{{ notify['container_name'] }}"
+    image: "{{ notify['container_image'] }}"
+    hostname: "{{ notify['container_hostname'] }}"
+    restart_policy: unless-stopped
+    recreate: true
+    env:
+      TZ: Europe/Bucharest
+      NTFY_BASE_URL: "https://{{ notify['domain'] }}"
+      NTFY_CACHE_FILE: "/var/lib/ntfy/cache.db"
+      NTFY_AUTH_FILE: "/var/lib/ntfy/auth.db"
+      NTFY_AUTH_DEFAULT_ACCESS: "deny-all"
+      NTFY_BEHIND_PROXY: "true"
+      NTFY_ATTACHMENT_CACHE_DIR: "/var/lib/ntfy/attachments"
+      NTFY_ENABLE_LOGIN: "true"
+      NTFY_WEB_ROOT: disable
+    ports:
+      - "2586:80"
+    networks:
+      - name: "{{ notify['network'] }}"
+    volumes:
+      - "{{ notify['data_volume'] }}:/var/lib/ntfy"
+    command: serve

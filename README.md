@@ -33,6 +33,7 @@ This repository provides a comprehensive guide to create an Ansible project and 
         * [Gitea Installation](#gitea-installation)
         * [Umami Installation](#umami-installation)
         * [Yacht Installation](#yacht-installation)
+        * [Notify Installation](#notify-installation)
 * [Resources](#resources)
 * [Feedback](#feedback)
 
@@ -1825,4 +1826,87 @@ After you login, you can update the password and user email in the `Settings` se
         tasks_from: yacht.yml
 ```
 
+#### Notify Installation
+
+In this section, we will install `Ntfy` (pronounced notify) on our VPS. Ntfy is a utility for sending notifications when a command finishes. We will use Ansible to install and configure Ntfy in a Docker container on our VPS.
+
+For more details about this service and its documentation, check this link: [Ntfy](https://ntfy.sh)
+
+Ntfy works by publishing messages to a queue and then having a notification service consume those messages and send them to the user. There is a mobile app available for Ntfy that you can use to subscribe to a specific queue and get notifications on your phone.
+
+The publishing of messages can be done by a simple curl command, or using email, or by integrating it with other services like GitHub Actions or GitLab CI/CD pipelines.
+
+Here is an example from the Ntfy documentation on how to publish a message using curl when you are low on space on your server:
+
+```bash
+echo "#!/bin/bash
+
+mingigs=10
+avail=$(df | awk '$6 == "/" && $4 < '$mingigs' * 1024*1024 { print $4/1024/1024 }')
+topicurl=https://notify.<your_domain>/mytopic
+
+if [ -n "$avail" ]; then
+  curl \
+    -d "Only $avail GB available on the root disk. Better clean that up." \
+    -H "Title: Low disk space alert on $(hostname)" \
+    -H "Priority: high" \
+    -H "Tags: warning,cd" \
+    $topicurl
+fi
+```
+Deffenetly check the documentation for more examples and how to use it.
+
+1. Inside `roles/services/tasks/`, create a new file named `notify.yml` with content from the following file:
+
+- [notify.yml](./services/notify.yml)
+
+2. Next step is to define the variables used in the `notify.yml` tasks. Update the `group_vars/all.yml` file with the following content:
+
+```yaml
+# Notify Container Configuration
+notify:
+    container_image: binwiederhier/ntfy:latest
+    container_name: notify
+    container_hostname: notify
+    network: public
+    domain: notify.<your_domain>
+```
+
+3. Update Caddy to expose the Notify interface using a reverse proxy. Update the `Caddyfile.j2` template file to include a reverse proxy configuration for Notify:
+
+```jinja
+notify.<your_domain> {
+    reverse_proxy localhost:2586
+
+    @httpget {
+            protocol http
+            method GET
+            path_regexp ^/([-_a-z0-9]{0,64}$|docs/|static/)
+        }
+        redir @httpget https://{host}{uri}
+}
+```
+
+4. After updating the `Caddyfile.j2` template file, run the `packages.yml` playbook to apply the changes:
+
+```bash
+ansible-playbook -i inventory.yml packages.yml -t caddy
+```
+
+5. Update the `services.yml` playbook to include the `notify` tasks:
+
+```yaml
+---
+- name: Configure VPS Services
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    # The other tasks are above
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: notify.yml
+```
 
