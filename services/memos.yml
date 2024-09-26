@@ -5,9 +5,9 @@
 
 - name: Create application memos container
   community.docker.docker_container:
-    name: "{{ memos_container_name }}"
-    image: "{{ memos_container_image }}"
-    hostname: "{{ memos_container_hostname }}"
+    name: "{{ memos['container_name'] }}"
+    image: "{{ memos['container_image'] }}"
+    hostname: "{{ memos['container_hostname'] }}"
     pull: true
     restart_policy: unless-stopped
     recreate: true
