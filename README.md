@@ -2034,6 +2034,20 @@ ansible-playbook -i inventory.yml packages.yml -t caddy
         tasks_from: memos.yml
 ```
 
+6. Run the `services.yml` playbook to install and configure Memos:
+
+```bash
+ansible-playbook -i inventory.yml services.yml
+```
+
+🎉 If the playbook runs successfully, Memos will be installed and configured in a Docker container on your VPS. To access Memos using the domain name, you can use the following URL in your web browser:
+
+```bash
+https://memo.<your_domain>
+```
+
+
+
 
 
 
