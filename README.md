@@ -2229,5 +2229,14 @@ You can login to Semaphore using the credentials you defined in the `secrets.yml
 - [Semaphore Documentation](https://docs.semaphoreui.com)
 
 
+## Feedback
+
+Feel free to fork this repository, add more services, and create a pull request. If you have any questions or feedback, please create an issue. I would be happy to help you.
+
+If you found this guide helpful, please give it a ⭐️ on GitHub and share it with your friends.
+
+Thank you for reading! 🙏
+
+
 
 
