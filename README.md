@@ -1994,16 +1994,6 @@ memos:
     network: public
 ```
 
-For the `memos_db_user` and `memos_db_pass` variables, we will use the `secrets.yml` file to store the sensitive data.
-
-Edit the `secrets.yml` file using `ansible-vault edit secrets.yml` and add the following content:
-
-```yaml
-memos_db_user: memos
-memos_db_name: memos
-memos_db_pass: mysecretpassword
-```
-
 3. Update Caddy to expose the Memos interface using a reverse proxy. Update the `Caddyfile.j2` template file to include a reverse proxy configuration for Memos:
 
 ```jinja
@@ -2045,6 +2035,51 @@ ansible-playbook -i inventory.yml services.yml
 
 ```bash
 https://memo.<your_domain>
+```
+The first user created in Memos is the admin user. After you login, you can stop the registration of new users in the `Settings` section.
+
+|🎯 At this point, our `service.yml` playbook should look like this|
+|------------------------------------------------------------------|
+
+```yaml
+---
+- name: Configure VPS Services
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: networks.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: postgresql.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: pgadmin.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: gitea.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: umami.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: yacht.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: notify.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: memos.yml
 ```
 
 
