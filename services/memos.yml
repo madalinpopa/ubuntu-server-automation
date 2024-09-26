@@ -21,3 +21,48 @@
       - "5230:5230"
     volumes:
       - "{{ memos['data_volume'] }}:/var/opt/memos"
+
+- name: Create application database
+  community.postgresql.postgresql_db:
+    name: "{{ memos_db_name }}"
+    encoding: UTF-8
+    template: template0
+    lc_collate: en_US.UTF-8
+    lc_ctype: en_US.UTF-8
+    login_user: "{{ postgres_db_user }}"
+    login_password: "{{ postgres_db_pass }}"
+    login_host: localhost
+  no_log: true
+
+- name: Create database users
+  community.postgresql.postgresql_user:
+    name: "{{ memos_db_user }}"
+    password: "{{ memos_database_pass }}"
+    login_user: "{{ postgres_db_user }}"
+    login_password: "{{ postgres_db_pass }}"
+    login_host: localhost
+  no_log: true
+
+- name: Update database owner
+  community.postgresql.postgresql_owner:
+    db: "{{ memos_db_name }}"
+    new_owner: "{{ memos_db_user }}"
+    obj_name: "{{ memos_db_name }}"
+    obj_type: database
+    login_user: "{{ postgres_db_user }}"
+    login_password: "{{ postgres_db_pass }}"
+    login_host: localhost
+  no_log: True
+
+
+- name: Grant database privileges to application user
+  community.postgresql.postgresql_privs:
+    db: "{{ memos_db_name }}"
+    privs: ALL
+    type: database
+    role: "{{ memos_db_user }}"
+    obj: "{{ memos_db_name }}"
+    login_user: "{{ postgres_db_user }}"
+    login_password: "{{ postgres_db_pass }}"
+    login_host: localhost
+  no_log: True
