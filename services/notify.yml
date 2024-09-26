@@ -28,9 +28,19 @@
       - "{{ notify['data_volume'] }}:/var/lib/ntfy"
     command: serve
 
+- name: Check if admin user exists
+  community.docker.docker_container_exec:
+    container: "{{ notify['container_name'] }}"
+    command: ntfy user list
+  register: admin_user
+
+
 - name: Create admin user
   community.docker.docker_container_exec:
     container: "{{ notify['container_name'] }}"
     command: ntfy user add --role=admin {{ notify_admin_user }}
     env:
       NTFY_PASSWORD: "{{ notify_admin_pass }}"
+  when: admin_user.stderr_lines is not search("admin")
+
+
