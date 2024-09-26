@@ -37,7 +37,7 @@
 - name: Create database users
   community.postgresql.postgresql_user:
     name: "{{ memos_db_user }}"
-    password: "{{ memos_database_pass }}"
+    password: "{{ memos_db_pass }}"
     login_user: "{{ postgres_db_user }}"
     login_password: "{{ postgres_db_pass }}"
     login_host: localhost
