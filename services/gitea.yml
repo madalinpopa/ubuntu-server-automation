@@ -9,6 +9,7 @@
     image: "{{ gitea['container_image'] }}"
     hostname: "{{ gitea['container_hostname'] }}"
     restart_policy: unless-stopped
+    image_name_mismatch: recreate
     recreate: true
     env:
       GITEA__database__DB_TYPE=postgres            

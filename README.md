@@ -35,6 +35,7 @@ This repository provides a comprehensive guide to create an Ansible project and 
         * [Yacht Installation](#yacht-installation)
         * [Notify Installation](#notify-installation)
         * [Memos Installation](#memos-installation)
+        * [Semaphore Installation](#semaphore-installation)
 * [Resources](#resources)
 * [Feedback](#feedback)
 
@@ -2082,6 +2083,132 @@ The first user created in Memos is the admin user. After you login, you can stop
         tasks_from: memos.yml
 ```
 
+#### Semaphore Installation
+
+Semaphore is a simple, self-hosted CI/CD service backed by Ansible. In this section, we will use Ansible to install and configure Semaphore in a Docker container on our VPS.
+
+1. Inside `roles/services/tasks/`, create a new file named `semaphore.yml` with content from the following file:
+
+- [semaphore.yml](./services/semaphore.yml)
+
+2. Next step is to define the variables used in the `semaphore.yml` tasks. Update the `group_vars/all.yml` file with the following content:
+
+```yaml
+# Semaphore Container Configuration
+semaphore:
+    container_image: semaphoreui/semaphore:latest    
+    container_name: semaphore
+    container_hostname: semaphore
+    network: public
+```
+
+For the sensitive data, we will use the `secrets.yml` file to store the sensitive data.
+
+Edit the `secrets.yml` file using `ansible-vault edit secrets.yml` and add the following content:
+
+```yaml
+semaphore_db_user: semaphore
+semaphore_db_pass: mysecretpassword
+semaphore_db_name: semaphore
+semaphore_admin_name: admin
+semaphore_admin_user: admin
+semaphore_admin_email: your@email.com
+semaphore_admin_pass: mysecretpassword
+semaphore_access_key_encryption: gs72mPntFATGJs9qK0pQ0rKtfidlexiMjYCH9gWKhTU= # generate a new key using `openssl rand -base64 32`
+```
+
+3. Update Caddy to expose the Semaphore interface using a reverse proxy. Update the `Caddyfile.j2` template file to include a reverse proxy configuration for Semaphore:
+
+```jinja
+semaphore.<your_domain> {
+    reverse_proxy localhost:3002
+}
+```
+
+4. After updating the `Caddyfile.j2` template file, run the `packages.yml` playbook to apply the changes:
+
+```bash
+ansible-playbook -i inventory.yml packages.yml -t caddy
+```
+
+5. Update the `services.yml` playbook to include the `semaphore` tasks:
+
+```yaml
+---
+- name: Configure VPS Services
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    # The other tasks are above
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: semaphore.yml
+```
+
+6. Run the `services.yml` playbook to install and configure Semaphore:
+
+```bash
+ansible-playbook -i inventory.yml services.yml
+```
+
+🎉 If the playbook runs successfully, Semaphore will be installed and configured in a Docker container on your VPS. To access Semaphore using the domain name, you can use the following URL in your web browser:
+
+```bash
+https://semaphore.<your_domain>
+```
+
+You can login to Semaphore using the credentials you defined in the `secrets.yml` file.
+
+|🎯 At this point, our `service.yml` playbook should look like this|
+|------------------------------------------------------------------|
+
+```yaml
+---
+- name: Configure VPS Services
+  hosts: vps
+  vars_files:
+    - secrets.yml
+  tasks:
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: networks.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: postgresql.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: pgadmin.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: gitea.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: umami.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: yacht.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: notify.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: memos.yml
+
+    - ansible.builtin.import_role:
+        name: services
+        tasks_from: semaphore.yml
+```
 
 
 
