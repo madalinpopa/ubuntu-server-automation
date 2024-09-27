@@ -2225,7 +2225,7 @@ You can login to Semaphore using the credentials you defined in the `secrets.yml
 - [Umami Documentation](https://umami.is/docs)
 - [Yacht Documentation](https://yacht.sh/docs/)
 - [Ntfy Documentation](https://ntfy.sh)
-- [Memos Documentation](
+- [Memos Documentation](https://www.usememos.com/docs)
 - [Semaphore Documentation](https://docs.semaphoreui.com)
 
 
