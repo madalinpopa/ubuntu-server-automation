@@ -43,7 +43,7 @@ This repository provides a comprehensive guide to create an Ansible project and 
 
 Welcome to the **Ubuntu Server Setup with Ansible** project, a comprehensive guide to automating the process of setting up and configuring an Ubuntu server from scratch using Ansible.
 
-Originally developed as part of OmniOpenCon 2024, this project has evolved into a powerful resource for developers, system administrators, and DevOps engineers looking to automate server provisioning. We leverage Ansible to handle all tasks that typically require manual intervention, including security configurations, package installations, and service setups.
+Originally developed as part of [OmniOpenCon 2024](https://omniopencon.org/), this project has evolved into a powerful resource for developers, system administrators, and DevOps engineers looking to automate server provisioning. We leverage Ansible to handle all tasks that typically require manual intervention, including security configurations, package installations, and service setups.
 
 By following this guide, you will:
 
