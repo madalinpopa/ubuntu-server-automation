@@ -1,0 +1,9 @@
+# {{ ansible_managed }}
+# Ubuntu's /etc/fail2ban/jail.d/defaults-debian.conf already enables the sshd
+# jail with the systemd journal backend. This file only tunes it.
+[sshd]
+enabled = true
+port = {{ ssh_port }}
+maxretry = {{ fail2ban_sshd_maxretry }}
+findtime = {{ fail2ban_sshd_findtime }}
+bantime = {{ fail2ban_sshd_bantime }}

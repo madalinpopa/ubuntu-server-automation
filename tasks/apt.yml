@@ -1,35 +1,33 @@
 ---
-- name: Set timezone to Europe/Bucharest
+# Base packages and time zone.
+# Full upgrades are not done here. unattended-upgrades installs security
+# updates every day (see tasks/updates.yml). Run "sudo apt full-upgrade"
+# yourself when you want everything else.
+
+- name: Update the apt package index if it is older than one hour
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install base packages
+  ansible.builtin.apt:
+    name:
+      - ca-certificates       # Trusted certificates for HTTPS downloads
+      - curl                  # Download files and test web servers
+      - python3-debian        # Needed by Ansible's deb822_repository module
+      - ufw                   # Uncomplicated Firewall
+      - unattended-upgrades   # Automatic security updates
+      - bash-completion       # Tab completion in the shell
+      - vim                   # Text editor
+      - git                   # Version control
+    state: present
+
+- name: Install extra packages
+  ansible.builtin.apt:
+    name: "{{ extra_packages }}"
+    state: present
+  when: extra_packages | length > 0
+
+- name: Set the time zone
   community.general.timezone:
-    name: Europe/Bucharest      # Change this to your timezone
-
-- name: Run "apt-get update"
-  ansible.builtin.apt:
-    update_cache: yes
-
-- name: Update all packages to their latest version
-  ansible.builtin.apt:
-    name: "*"
-    state: latest
-
-- name: Install required packages
-  ansible.builtin.apt:
-    pkg:
-    - debian-keyring            # Debian keyring
-    - debian-archive-keyring    # Debian archive keyring
-    - build-essential           # Development tools
-    - bash-completion           # Bash completion
-    - apt-transport-https       # HTTPS support for APT
-    - ca-certificates           # CA certificates
-    - python3-full              # Latest Python 3
-    - python3-pip               # Python package installer
-    - python3-psycopg2          # PostgreSQL adapter for Python
-    - fail2ban                  # Intrusion prevention software
-    - gnupg                     # GnuPG
-    - curl                      # Transfer data with URLs
-    - procps                    # Process utilities    
-    - file                      # File type identification
-    - ufw                       # Uncomplicated Firewall
-    - git                       # Version control system
-    - vim                       # Text editor
-
+    name: "{{ timezone }}"

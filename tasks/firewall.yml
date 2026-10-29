@@ -1,28 +1,43 @@
---- 
-- name: Ensure UFW is installed
-  ansible.builtin.apt:
-    name: ufw
-    state: present
+---
+# Firewall with UFW (Uncomplicated Firewall).
+# Order matters: the SSH rule is added before UFW is enabled, so the
+# connection Ansible uses is never blocked.
+# Rules apply to IPv4 and IPv6 (IPV6=yes in /etc/default/ufw).
 
-- name: Allow SSH connections
+- name: Make sure UFW also filters IPv6
+  ansible.builtin.lineinfile:
+    path: /etc/default/ufw
+    regexp: "^IPV6="
+    line: "IPV6=yes"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload ufw
+
+- name: Allow SSH
   community.general.ufw:
     rule: allow
-    port: "{{ ssh_port }}"
+    port: "{{ ssh_port | string }}"
     proto: tcp
+    comment: ssh
 
-- name: Allow Http connections
+- name: Allow extra TCP ports
   community.general.ufw:
     rule: allow
-    port: '80'
+    port: "{{ item | string }}"
     proto: tcp
+  loop: "{{ firewall_allowed_tcp_ports }}"
 
-- name: Allow Https connections
+- name: Deny incoming connections by default
   community.general.ufw:
-    rule: allow
-    port: '443'
-    proto: tcp
+    default: deny
+    direction: incoming
 
-- name: Deny everything and enable UFW
+- name: Allow outgoing connections by default
+  community.general.ufw:
+    default: allow
+    direction: outgoing
+
+- name: Enable UFW
   community.general.ufw:
     state: enabled
-    policy: deny

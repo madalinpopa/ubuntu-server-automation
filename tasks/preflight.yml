@@ -1,0 +1,54 @@
+---
+# Checks that run before anything changes on the server.
+# They stop the play early when a setting would lock you out.
+
+- name: Check that the server runs a supported Ubuntu release
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.distribution == 'Ubuntu'
+      - ansible_facts.distribution_version in supported_ubuntu_versions
+    fail_msg: >-
+      This server runs {{ ansible_facts.distribution }} {{ ansible_facts.distribution_version }}.
+      Supported releases: {{ supported_ubuntu_versions | join(', ') }}.
+    quiet: true
+
+- name: Check the admin user settings
+  ansible.builtin.assert:
+    that:
+      - admin_user | length > 0
+      - admin_user != 'root'
+      - admin_ssh_keys | length > 0
+    fail_msg: >-
+      Set admin_user (not root) and add at least one public key to admin_ssh_keys.
+      Without a key the admin user cannot log in once password login is disabled.
+    quiet: true
+
+- name: Check the admin password hash
+  ansible.builtin.assert:
+    that:
+      - admin_password_hash is match('^\$[0-9a-z]+\$')
+      - "'replace-me' not in admin_password_hash"
+    fail_msg: >-
+      admin_password_hash is empty or still the example value. Create a hash with
+      "openssl passwd -6" and store it as vault_admin_password_hash in
+      inventory/group_vars/all/vault.yml, or set admin_sudo_nopasswd: true.
+    quiet: true
+  no_log: true
+  when: not admin_sudo_nopasswd | bool
+
+- name: Find the user Ansible logs in as
+  ansible.builtin.command: id -un
+  become: false
+  changed_when: false
+  register: preflight_login_user
+
+- name: Check that ssh_allow_users includes the user Ansible connects as
+  ansible.builtin.assert:
+    that:
+      - preflight_login_user.stdout in ssh_allow_users
+      - admin_user in ssh_allow_users
+    fail_msg: >-
+      ssh_allow_users is {{ ssh_allow_users }}. It must include admin_user ({{ admin_user }})
+      and the current SSH user ({{ preflight_login_user.stdout }}), or the next connection fails.
+    quiet: true
+  when: ssh_allow_users | length > 0

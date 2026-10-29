@@ -1,0 +1,59 @@
+---
+# The admin user: a normal account with sudo and SSH key login.
+# The SSH hardening in tasks/ssh.yml runs only after this account works.
+
+- name: Create the admin user
+  ansible.builtin.user:
+    name: "{{ admin_user }}"
+    shell: /bin/bash
+    groups: sudo
+    append: true
+    password: "{{ admin_password_hash if admin_password_hash | length > 0 else omit }}"
+    update_password: always
+    state: present
+  no_log: true
+
+- name: Add SSH public keys for the admin user
+  ansible.posix.authorized_key:
+    user: "{{ admin_user }}"
+    key: "{{ admin_ssh_keys | join('\n') }}"
+    exclusive: "{{ admin_ssh_keys_exclusive | bool }}"
+    state: present
+
+- name: Allow the admin user to use sudo without a password
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/90-admin-nopasswd
+    content: "{{ admin_user }} ALL=(ALL:ALL) NOPASSWD: ALL\n"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: visudo -cf %s
+  when: admin_sudo_nopasswd | bool
+
+- name: Remove passwordless sudo for the admin user
+  ansible.builtin.file:
+    path: /etc/sudoers.d/90-admin-nopasswd
+    state: absent
+  when: not admin_sudo_nopasswd | bool
+
+# Lockout check: open a new SSH connection as the admin user, with the same
+# key settings Ansible uses. If this fails, the play stops before root login
+# and password login are disabled.
+- name: Check that the admin user can log in with an SSH key
+  ansible.builtin.command: id -nG
+  become: false
+  vars:
+    ansible_user: "{{ admin_user }}"
+    # Only a key counts. A password must not make this check pass.
+    ansible_ssh_extra_args: "-o PreferredAuthentications=publickey"
+  changed_when: false
+  register: users_admin_login
+
+- name: Check that the admin user is in the sudo group
+  ansible.builtin.assert:
+    that:
+      - "'sudo' in users_admin_login.stdout.split()"
+    fail_msg: >-
+      {{ admin_user }} logged in but is not in the sudo group
+      (groups: {{ users_admin_login.stdout }}).
+    quiet: true

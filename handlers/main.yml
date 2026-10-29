@@ -1,0 +1,29 @@
+---
+# Handlers run once at the end of a play (or at a flush_handlers task),
+# and only when a task reported a change and notified them.
+
+- name: Reload ssh
+  # Existing sessions stay open. New logins use the new settings.
+  ansible.builtin.systemd_service:
+    name: ssh.service
+    state: reloaded
+
+- name: Reload ufw
+  ansible.builtin.command: ufw reload
+  changed_when: true
+
+- name: Restart fail2ban
+  ansible.builtin.systemd_service:
+    name: fail2ban.service
+    state: restarted
+
+- name: Restart docker
+  ansible.builtin.systemd_service:
+    name: docker.service
+    state: restarted
+
+- name: Reload caddy
+  # Caddy applies a new config without downtime on reload.
+  ansible.builtin.systemd_service:
+    name: caddy.service
+    state: reloaded

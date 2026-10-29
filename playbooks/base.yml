@@ -1,0 +1,37 @@
+---
+# Base provisioning for a fresh Ubuntu server.
+# Run: ansible-playbook playbooks/base.yml
+#
+# Order matters. The admin user and its SSH key are checked before SSH
+# hardening, and the SSH rule is added before the firewall is enabled.
+
+- name: Base server setup
+  hosts: all
+  become: true
+
+  handlers:
+    - name: Import handlers
+      ansible.builtin.import_tasks: ../handlers/main.yml
+
+  tasks:
+    - name: Run pre-flight checks
+      ansible.builtin.import_tasks: ../tasks/preflight.yml
+
+    - name: Install base packages
+      ansible.builtin.import_tasks: ../tasks/apt.yml
+
+    - name: Configure automatic security updates
+      ansible.builtin.import_tasks: ../tasks/updates.yml
+
+    - name: Create the admin user
+      ansible.builtin.import_tasks: ../tasks/users.yml
+
+    - name: Harden the SSH server
+      ansible.builtin.import_tasks: ../tasks/ssh.yml
+
+    - name: Configure the firewall
+      ansible.builtin.import_tasks: ../tasks/firewall.yml
+
+    - name: Configure fail2ban
+      ansible.builtin.import_tasks: ../tasks/fail2ban.yml
+      when: fail2ban_enabled | bool

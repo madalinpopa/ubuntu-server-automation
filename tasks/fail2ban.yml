@@ -1,21 +1,22 @@
 ---
-- name: Ensure Fail2ban is installed
+# fail2ban bans IP addresses that fail SSH login too often.
+
+- name: Install fail2ban
   ansible.builtin.apt:
     name: fail2ban
     state: present
 
-- name: Copy fail2ban configuration
-  copy:
-    dest: /etc/fail2ban/jail.local
-    content: |
-        [sshd]
-        enabled = true             
-        port = ssh                
-        filter = sshd            
-        logpath = /var/log/auth.log
-        maxretry = 3
-        bantime = 3600
+- name: Configure the sshd jail
+  ansible.builtin.template:
+    src: fail2ban_sshd.local.j2
+    dest: /etc/fail2ban/jail.d/sshd.local
     owner: root
     group: root
-    mode: '0644'
-  notify: restart_fail2ban
+    mode: "0644"
+  notify: Restart fail2ban
+
+- name: Start fail2ban and enable it at boot
+  ansible.builtin.systemd_service:
+    name: fail2ban.service
+    enabled: true
+    state: started

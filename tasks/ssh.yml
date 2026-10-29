@@ -1,26 +1,59 @@
 ---
-- name: Harden SSH Configuration
-  ansible.builtin.blockinfile:
-    path: /etc/ssh/sshd_config
-    block: |
-      Protocol 2
-      PermitRootLogin no
-      PasswordAuthentication no
-      AllowUsers {{ username }}
-      Port {{ ssh_port }}
-      PubkeyAuthentication yes
-      ClientAliveInterval 300
-      ClientAliveCountMax 0
-      MaxAuthTries 3
-      LogLevel VERBOSE
-      MaxStartups 10:30:60
-    backup: yes
-  notify: "restart_ssh"
-  changed_when: true
+# SSH server hardening with a drop-in file.
+#
+# Ubuntu's /etc/ssh/sshd_config includes /etc/ssh/sshd_config.d/*.conf at the
+# top, and sshd keeps the first value it reads for each keyword. A file named
+# 00-*.conf is read before cloud-init's 50-cloud-init.conf, so its values win.
+#
+# The SSH port is not changed. On Ubuntu 24.04 and later sshd is started by
+# systemd socket activation (ssh.socket), and the port comes from the socket
+# unit. Changing it safely needs more steps than this project takes on.
 
-- name: Force all notified handlers to run at this point
+- name: Check that sshd listens on ssh_port before changing anything
+  ansible.builtin.command: ss -Htln "sport = :{{ ssh_port }}"
+  changed_when: false
+  register: ssh_listeners
+  failed_when: ssh_listeners.stdout | length == 0
+
+- name: Write the SSH hardening drop-in
+  ansible.builtin.template:
+    src: sshd_hardening.conf.j2
+    dest: /etc/ssh/sshd_config.d/00-hardening.conf
+    owner: root
+    group: root
+    mode: "0644"
+    # Checks the new file on its own before it is put in place.
+    validate: /usr/sbin/sshd -t -f %s
+  notify: Reload ssh
+
+- name: Test the complete sshd configuration
+  ansible.builtin.command: /usr/sbin/sshd -t
+  changed_when: false
+
+- name: Apply SSH changes now
   ansible.builtin.meta: flush_handlers
 
-- name: Update Ansible to use new SSH port
-  ansible.builtin.set_fact:
-    ansible_port: "{{ ssh_port }}"
+- name: Read the effective sshd settings
+  ansible.builtin.command: /usr/sbin/sshd -T
+  changed_when: false
+  register: ssh_effective
+
+- name: Check that the hardening settings are in effect
+  ansible.builtin.assert:
+    that:
+      - "'passwordauthentication no' in ssh_effective.stdout_lines"
+      - "'kbdinteractiveauthentication no' in ssh_effective.stdout_lines"
+      - "'permitrootlogin no' in ssh_effective.stdout_lines"
+      - "'pubkeyauthentication yes' in ssh_effective.stdout_lines"
+    fail_msg: >-
+      sshd -T does not show the expected values. Another file in
+      /etc/ssh/sshd_config.d/ that sorts before 00-hardening.conf may override them.
+    quiet: true
+
+# Close the shared SSH connection so the next task logs in again.
+# That proves new logins still work with the new settings.
+- name: Reconnect to the server
+  ansible.builtin.meta: reset_connection
+
+- name: Check that a new SSH login works
+  ansible.builtin.ping:

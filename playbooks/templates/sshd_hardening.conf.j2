@@ -1,0 +1,20 @@
+# {{ ansible_managed }}
+# SSH server hardening. sshd uses the first value it finds for each setting.
+# This file sorts first in /etc/ssh/sshd_config.d/, so it wins over
+# files such as 50-cloud-init.conf that may enable password login.
+
+# Log in with SSH keys only.
+PubkeyAuthentication yes
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+
+# No direct root login. Log in as the admin user and use sudo.
+PermitRootLogin no
+
+# A server does not need to forward graphical (X11) programs.
+X11Forwarding no
+{% if ssh_allow_users | length > 0 %}
+
+# Only these users may log in over SSH.
+AllowUsers {{ ssh_allow_users | join(' ') }}
+{% endif %}
