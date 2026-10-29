@@ -1,0 +1,61 @@
+# Fast checks that need no server: playbook syntax, ansible-lint and the
+# Markdown docs. The integration tests boot Lima VMs, which GitHub-hosted
+# runners cannot run cheaply, so run them locally with tests/run.sh.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ansible:
+    name: Syntax check and lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # ansible-core 2.21 supports controller Python 3.12 to 3.14.
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+
+      - name: Install Python packages
+        run: python -m pip install -r requirements.txt
+
+      - name: Install collections
+        run: ansible-galaxy collection install -r requirements.yml
+
+      # The example inventory has no secrets. Every vault_* variable has an
+      # empty default, so no vault file or password is needed.
+      - name: Check playbook syntax
+        run: |
+          for playbook in playbooks/*.yml; do
+            ansible-playbook --syntax-check -i inventory/hosts.example.yml "$playbook"
+          done
+
+      # --offline: the collections are already installed above.
+      - name: Run ansible-lint
+        run: ansible-lint --offline
+
+  docs:
+    name: Docs check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check Markdown files
+        run: python3 .github/scripts/check_docs.py
