@@ -60,8 +60,25 @@
     group: root
     mode: "0644"
 
+- name: Create the directory for the service sites
+  # playbooks/services.yml writes one file per service here, after the
+  # service is set up. The Caddyfile imports them.
+  ansible.builtin.file:
+    path: /etc/caddy/sites
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
 - name: Write the Caddyfile
-  ansible.builtin.import_tasks: caddyfile.yml
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: /etc/caddy/Caddyfile
+    owner: root
+    group: root
+    mode: "0644"
+    validate: caddy validate --adapter caddyfile --config %s
+  notify: Reload caddy
 
 - name: Start Caddy and enable it at boot
   ansible.builtin.systemd_service:

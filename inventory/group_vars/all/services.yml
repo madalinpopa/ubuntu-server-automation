@@ -114,11 +114,12 @@ ntfy_admin_password: "{{ vault_ntfy_admin_password | default('') }}"
 
 # --- Caddy sites for the services --------------------------------------------
 # Built from the settings above: one entry per enabled service with a domain.
-# playbooks/templates/Caddyfile.j2 adds a reverse_proxy site for each. Do not edit.
+# Each services/<name>.yml writes /etc/caddy/sites/<name>.caddy, a
+# reverse_proxy site, as its last step. Do not edit.
 caddy_service_sites: >-
-  {{ ([{'domain': pgadmin_domain, 'port': pgadmin_port}] if pgadmin_enabled | bool and pgadmin_domain | length > 0 else [])
-     + ([{'domain': gitea_domain, 'port': gitea_port}] if gitea_enabled | bool and gitea_domain | length > 0 else [])
-     + ([{'domain': umami_domain, 'port': umami_port}] if umami_enabled | bool and umami_domain | length > 0 else [])
-     + ([{'domain': semaphore_domain, 'port': semaphore_port}] if semaphore_enabled | bool and semaphore_domain | length > 0 else [])
-     + ([{'domain': memos_domain, 'port': memos_port}] if memos_enabled | bool and memos_domain | length > 0 else [])
-     + ([{'domain': ntfy_domain, 'port': ntfy_port}] if ntfy_enabled | bool and ntfy_domain | length > 0 else []) }}
+  {{ ([{'name': 'pgadmin', 'domain': pgadmin_domain, 'port': pgadmin_port}] if pgadmin_enabled | bool and pgadmin_domain | length > 0 else [])
+     + ([{'name': 'gitea', 'domain': gitea_domain, 'port': gitea_port}] if gitea_enabled | bool and gitea_domain | length > 0 else [])
+     + ([{'name': 'umami', 'domain': umami_domain, 'port': umami_port}] if umami_enabled | bool and umami_domain | length > 0 else [])
+     + ([{'name': 'semaphore', 'domain': semaphore_domain, 'port': semaphore_port}] if semaphore_enabled | bool and semaphore_domain | length > 0 else [])
+     + ([{'name': 'memos', 'domain': memos_domain, 'port': memos_port}] if memos_enabled | bool and memos_domain | length > 0 else [])
+     + ([{'name': 'ntfy', 'domain': ntfy_domain, 'port': ntfy_port}] if ntfy_enabled | bool and ntfy_domain | length > 0 else []) }}

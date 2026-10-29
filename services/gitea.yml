@@ -108,3 +108,14 @@
       - --must-change-password=false
   when: gitea_admins.stdout is not search('(?m)^\d+\s+' ~ gitea_admin_user ~ '\s')
   no_log: true
+
+- name: Publish Gitea through Caddy
+  # Last step, so the app is public only after its admin account is set up.
+  ansible.builtin.import_tasks: ../tasks/caddy_site.yml
+  vars:
+    caddy_site_name: gitea
+    caddy_site_domain: "{{ gitea_domain }}"
+    caddy_site_port: "{{ gitea_port }}"
+  when:
+    - caddy_enabled | bool
+    - gitea_domain | length > 0

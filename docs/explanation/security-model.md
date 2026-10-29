@@ -124,6 +124,8 @@ A Docker network is not "public" or "private" by itself. What makes a service re
 
 Several apps give admin rights to whoever opens them first, or start with a known default password. The playbook closes that window before the app is reachable from outside: it creates the Gitea admin and locks the web installer, changes Umami's default `admin` / `umami` login, creates the first Memos user, creates the ntfy admin and denies anonymous access, and passes the Semaphore and pgAdmin admin accounts on first start.
 
+Until then the app listens on 127.0.0.1 only. Caddy publishes it only after that. The main Caddyfile has the welcome page and the line `import /etc/caddy/sites/*.caddy`. The last task of each service writes that service's file, for example `/etc/caddy/sites/umami.caddy`, and Caddy reloads at the end of the play. If a service fails half way, its file is never written, so it stays private.
+
 ## The docker group is root
 
 Anyone who can talk to the Docker daemon can start a container that mounts `/` from the host, and so can do anything root can do. Docker's own documentation says the `docker` group grants root-level privileges. That is why `docker_users` is empty by default and the docs use `sudo docker`. The admin user already has sudo, so adding it to the group mainly removes the password prompt, at the cost of making the SSH key alone enough for root.

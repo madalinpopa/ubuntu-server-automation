@@ -14,10 +14,7 @@
 	root * /var/www/html
 	file_server
 }
-{% for site in caddy_service_sites %}
 
-# Service on 127.0.0.1:{{ site.port }}
-{{ site.domain }} {
-	reverse_proxy 127.0.0.1:{{ site.port }}
-}
-{% endfor %}
+# One file per service site, for example sites/gitea.caddy. playbooks/services.yml
+# writes each file only after the service's admin account is set up.
+import /etc/caddy/sites/*.caddy

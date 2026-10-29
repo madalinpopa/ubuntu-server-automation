@@ -73,7 +73,7 @@ These are standard Ansible variables. Set them per host in `inventory/hosts.yml`
 | `caddy_enabled` | `false` | Install Caddy (`playbooks/caddy.yml`) and open ports 80 and 443 |
 | `caddy_site_address` | `":80"` | Site address for the welcome page. A domain name gives HTTPS. `":80"` is plain HTTP on any address |
 | `caddy_local_certs` | `false` | Use Caddy's own local certificate authority instead of Let's Encrypt. For tests only: browsers do not trust these certificates |
-| `caddy_service_sites` | built from the service settings | List of `{domain, port}` for enabled services with a domain. Do not set it yourself |
+| `caddy_service_sites` | built from the service settings | List of `{name, domain, port}` for enabled services with a domain. The checks use it, and `services.yml` removes the site files of services that are not in it. Do not set it yourself |
 
 ## Optional services
 

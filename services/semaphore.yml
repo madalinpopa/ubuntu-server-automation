@@ -73,3 +73,14 @@
       start_period: 60s
       start_interval: 2s
   no_log: true
+
+- name: Publish Semaphore through Caddy
+  # Last step, so the app is public only after its admin account is set up.
+  ansible.builtin.import_tasks: ../tasks/caddy_site.yml
+  vars:
+    caddy_site_name: semaphore
+    caddy_site_domain: "{{ semaphore_domain }}"
+    caddy_site_port: "{{ semaphore_port }}"
+  when:
+    - caddy_enabled | bool
+    - semaphore_domain | length > 0

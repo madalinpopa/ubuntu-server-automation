@@ -60,3 +60,14 @@
   changed_when: true
   when: memos_profile.json.needsSetup | default(false) | bool
   no_log: true
+
+- name: Publish Memos through Caddy
+  # Last step, so the app is public only after its admin account is set up.
+  ansible.builtin.import_tasks: ../tasks/caddy_site.yml
+  vars:
+    caddy_site_name: memos
+    caddy_site_domain: "{{ memos_domain }}"
+    caddy_site_port: "{{ memos_port }}"
+  when:
+    - caddy_enabled | bool
+    - memos_domain | length > 0

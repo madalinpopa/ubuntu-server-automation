@@ -11,7 +11,7 @@ You need a server that has already been set up with the [tutorial](../tutorial-f
 - An app without a domain is still reachable from your computer through an SSH tunnel.
 - PostgreSQL is attached only to an internal Docker network. It has no published port at all.
 - Every app keeps its data in a named Docker volume, so containers can be recreated without losing data.
-- Before an app is reachable, the playbook creates its admin account with a password from your vault. Nobody can claim a fresh install before you.
+- Before an app is reachable, the playbook creates its admin account with a password from your vault. Only then does it write the app's Caddy site, `/etc/caddy/sites/<name>.caddy`. Nobody can claim a fresh install before you.
 
 | App | Variable | Port on 127.0.0.1 | Needs PostgreSQL | Login after setup |
 |---|---|---|---|---|
@@ -128,7 +128,7 @@ ansible-playbook playbooks/site.yml --ask-vault-pass -K
 
 The first run downloads images and waits for each container to report healthy, so it can take several minutes. It ends with `failed=0`.
 
-If you only changed service settings, `playbooks/services.yml` is enough. It also rewrites the Caddyfile so the sites match the enabled apps.
+If you only changed service settings, `playbooks/services.yml` is enough. It also updates the Caddy sites in `/etc/caddy/sites/` so they match the enabled apps.
 
 ## 6. Verify
 
@@ -174,7 +174,7 @@ sudo docker exec -it postgres psql -U postgres
 
 ## Turn a service off
 
-Set `<name>_enabled: false` and run the playbook again. Caddy drops the site, but the playbook does **not** remove the container or its data. That is on purpose, so a typo never deletes data. To remove it by hand, take a [backup](backup-restore.md) first, then:
+Set `<name>_enabled: false` and run the playbook again. The playbook removes `/etc/caddy/sites/<name>.caddy` and Caddy drops the site, but the playbook does **not** remove the container or its data. That is on purpose, so a typo never deletes data. To remove it by hand, take a [backup](backup-restore.md) first, then:
 
 ```bash
 sudo docker rm -f memos

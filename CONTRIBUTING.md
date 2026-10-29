@@ -61,7 +61,7 @@ See [Run the tests in Lima VMs](docs/how-to/test-with-lima.md). CI cannot run it
 - Tasks must be idempotent: a second run reports `changed=0`. The Lima test checks this.
 - New settings go in `inventory/group_vars/all/vars.yml` or `services.yml` with a comment and a safe default. Document them in [docs/reference/variables.md](docs/reference/variables.md).
 - Secrets come from the vault as `vault_*` variables, with a placeholder in `inventory/vault.example.yml`. Use `no_log: true` on tasks that handle them.
-- A new service must be off by default, publish its port on `127.0.0.1` only, pin its image tag, and create its admin account before it is reachable. Follow an existing file in `services/`.
+- A new service must be off by default, publish its port on `127.0.0.1` only, pin its image tag, create its admin account before it is reachable, and publish its Caddy site with `tasks/caddy_site.yml` as its last task. Add its name to the list in the last task of `playbooks/services.yml`. Follow an existing file in `services/`.
 - Write docs in plain English with short sentences, no em dashes, and commands that can be copied as they are.
 
 ## Commit messages

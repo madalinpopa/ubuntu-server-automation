@@ -67,6 +67,13 @@
       ansible.builtin.import_tasks: ../services/ntfy.yml
       when: ntfy_enabled | bool
 
-    - name: Update the Caddy sites for the services
-      ansible.builtin.import_tasks: ../tasks/caddyfile.yml
+    # Each service above publishes its own Caddy site as its last step,
+    # after its admin account is set up. This removes the sites of services
+    # that are off or have no domain. Caddy reloads once, at the end.
+    - name: Remove the Caddy sites of services that are off or have no domain
+      ansible.builtin.file:
+        path: /etc/caddy/sites/{{ item }}.caddy
+        state: absent
+      loop: "{{ ['pgadmin', 'gitea', 'umami', 'semaphore', 'memos', 'ntfy'] | difference(caddy_service_sites | map(attribute='name')) }}"
+      notify: Reload caddy
       when: caddy_enabled | bool

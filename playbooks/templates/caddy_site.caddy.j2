@@ -1,0 +1,5 @@
+# {{ ansible_managed }}
+# {{ caddy_site_name }} on 127.0.0.1:{{ caddy_site_port }}
+{{ caddy_site_domain }} {
+	reverse_proxy 127.0.0.1:{{ caddy_site_port }}
+}

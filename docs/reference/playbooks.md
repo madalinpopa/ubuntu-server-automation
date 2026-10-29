@@ -39,7 +39,7 @@ Every command runs from the repository folder. Add `--ask-vault-pass` once the v
 | `playbooks/base.yml` | server | yes | Pre-flight checks, packages and time zone, automatic updates, admin user, SSH hardening, UFW, fail2ban |
 | `playbooks/docker.yml` | server | yes | Docker Engine from Docker's repository, `/etc/docker/daemon.json`, `docker_users`. Does nothing unless `docker_enabled` |
 | `playbooks/caddy.yml` | server | yes | Caddy from Caddy's stable repository, `/etc/caddy/Caddyfile`, welcome page, UFW rules for 80 and 443. Does nothing unless `caddy_enabled` |
-| `playbooks/services.yml` | server | yes | Containers, networks, volumes, databases and admin accounts for enabled apps, and the Caddy sites. With every app off it changes nothing |
+| `playbooks/services.yml` | server | yes | Containers, networks, volumes, databases and admin accounts for enabled apps. Then, for each app with a domain, its Caddy site in `/etc/caddy/sites/`. With every app off it changes nothing |
 | `playbooks/verify.yml` | server | no | Checks the server's real state. See below |
 | `playbooks/verify_external.yml` | control machine | no | Checks the server from outside. See below |
 
@@ -66,7 +66,8 @@ Every command runs from the repository folder. Add `--ask-vault-pass` once the v
 | `/etc/apt/keyrings/docker.asc`, `/etc/apt/sources.list.d/docker.sources` | root, 0644 | `tasks/docker.yml` |
 | `/etc/docker/daemon.json` | root, 0644 | `tasks/docker.yml` |
 | `/etc/apt/keyrings/caddy-stable.asc`, `/etc/apt/sources.list.d/caddy-stable.sources` | root, 0644 | `tasks/caddy.yml` |
-| `/etc/caddy/Caddyfile` | root, 0644 | `tasks/caddyfile.yml` |
+| `/etc/caddy/Caddyfile` | root, 0644 | `tasks/caddy.yml` |
+| `/etc/caddy/sites/<name>.caddy`, one per service with a domain | root, 0644 | `tasks/caddy_site.yml`, imported by each `services/<name>.yml` as its last task |
 | `/var/www/html/index.html` | root, 0644 | `tasks/caddy.yml` |
 
 ### Containers, volumes and networks

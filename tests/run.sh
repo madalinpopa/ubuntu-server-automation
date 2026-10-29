@@ -5,7 +5,8 @@
 #   1. creates a fresh VM
 #   2. turns on SSH key login for root, like on a fresh VPS, and runs
 #      playbooks/site.yml as root (base + Docker + Caddy + all optional
-#      services, with fake .test domains and Caddy's local certificates)
+#      services, with fake .test domains and Caddy's local certificates),
+#      and checks that each app's Caddy site came after its admin account
 #   3. checks that root can no longer log in, then runs site.yml again as
 #      Lima's normal user and fails if anything changed (idempotency)
 #   4. starts a test container published with "-p 8080:8080"
@@ -118,6 +119,22 @@ if [ "${FIRST_RUN_AS_ROOT:-1}" = "1" ]; then
 fi
 run_playbook site-run1 ${FIRST_RUN_ARGS[@]+"${FIRST_RUN_ARGS[@]}"} playbooks/site.yml
 check_recap "$LOG_DIR/site-run1.log" any
+
+# A fresh app must be secured before Caddy publishes it. Each service writes
+# its Caddy site file as its last task, so that task must come later.
+check_before() {
+  local log=$1 first=$2 second=$3 a b
+  a=$(grep -n -m1 -F "TASK [$first]" "$log" | cut -d: -f1)
+  b=$(grep -n -m1 -F "TASK [$second]" "$log" | cut -d: -f1)
+  if [ -z "$a" ] || [ -z "$b" ] || [ "$a" -ge "$b" ]; then
+    echo "FAIL: '$second' must run after '$first' (see $log)"; return 1
+  fi
+}
+check_before "$LOG_DIR/site-run1.log" "Create the Gitea admin user" "Write the Caddy site for gitea"
+check_before "$LOG_DIR/site-run1.log" "Replace the default Umami admin password" "Write the Caddy site for umami"
+check_before "$LOG_DIR/site-run1.log" "Create the Memos admin account" "Write the Caddy site for memos"
+check_before "$LOG_DIR/site-run1.log" "Create the ntfy admin user" "Write the Caddy site for ntfy"
+echo "OK: each service site was published after its admin account was set up"
 
 if [ "${FIRST_RUN_AS_ROOT:-1}" = "1" ]; then
   for vm in "${VMS[@]}"; do

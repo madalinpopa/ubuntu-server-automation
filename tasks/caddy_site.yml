@@ -1,0 +1,17 @@
+---
+# Publishes one service through Caddy: writes /etc/caddy/sites/<name>.caddy,
+# which the Caddyfile imports, and reloads Caddy at the end of the play.
+# The last task of each services/<name>.yml imports this file, after the
+# admin account is set up. So a fresh app with a default password, or one
+# that makes the first visitor its admin, is never public.
+# Variables: caddy_site_name, caddy_site_domain, caddy_site_port
+
+- name: Write the Caddy site for {{ caddy_site_name }}
+  ansible.builtin.template:
+    src: caddy_site.caddy.j2
+    dest: /etc/caddy/sites/{{ caddy_site_name }}.caddy
+    owner: root
+    group: root
+    mode: "0644"
+    validate: caddy validate --adapter caddyfile --config %s
+  notify: Reload caddy

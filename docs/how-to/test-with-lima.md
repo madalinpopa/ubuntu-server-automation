@@ -9,7 +9,7 @@ The test script `tests/run.sh` checks the playbooks on real Ubuntu virtual machi
 For each Ubuntu release (24.04 and 26.04 by default) it:
 
 1. creates a fresh VM,
-2. allows SSH key login as root, like on a fresh VPS, and runs `playbooks/site.yml` as root with Docker, Caddy and all seven services turned on, using fake `.test` domains and Caddy's local certificates,
+2. allows SSH key login as root, like on a fresh VPS, and runs `playbooks/site.yml` as root with Docker, Caddy and all seven services turned on, using fake `.test` domains and Caddy's local certificates, and checks in the log that each app's Caddy site was written only after its admin account was set up,
 3. checks that root can no longer log in, then runs `site.yml` again as Lima's normal user and fails if anything changed (the idempotency check),
 4. starts a test container published with `-p 8080:8080`, to prove Docker keeps it on 127.0.0.1,
 5. runs `playbooks/verify.yml` on the VM,
