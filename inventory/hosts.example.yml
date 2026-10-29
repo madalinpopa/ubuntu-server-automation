@@ -1,0 +1,15 @@
+---
+# Example inventory. Copy it and edit the copy:
+#   cp inventory/hosts.example.yml inventory/hosts.yml
+# inventory/hosts.yml is ignored by git.
+all:
+  hosts:
+    vps1:
+      # Public IP address or DNS name of the server.
+      ansible_host: 203.0.113.10
+      # First run: the user your provider gave you (often root or ubuntu).
+      # After the first run root login is disabled. Then use admin_user.
+      ansible_user: root
+      # Public keys for the admin user. Use your own key here.
+      admin_ssh_keys:
+        - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIExampleKeyReplaceMe you@laptop"

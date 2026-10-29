@@ -1,0 +1,10 @@
+---
+# Ansible collections used by the playbooks.
+# Install with: ansible-galaxy collection install -r requirements.yml
+collections:
+  # community.general.ufw and community.general.timezone
+  - name: community.general
+    version: ">=13.5.0,<14.0.0"
+  # ansible.posix.authorized_key
+  - name: ansible.posix
+    version: ">=2.2.2,<3.0.0"

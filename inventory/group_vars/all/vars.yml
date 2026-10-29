@@ -1,0 +1,79 @@
+---
+# Default settings for every server in the inventory.
+# Change them here, or override them per host in your inventory.
+# Secrets live in inventory/group_vars/all/vault.yml (see inventory/vault.example.yml).
+
+# Ubuntu releases these playbooks are tested on.
+supported_ubuntu_versions:
+  - "24.04"
+  - "26.04"
+
+# Time zone in tz database format, for example Europe/Bucharest.
+timezone: Etc/UTC
+
+# Extra packages to install on every server. The base playbook already
+# installs what it needs (ufw, unattended-upgrades and a few tools).
+extra_packages: []
+
+# --- Admin user -------------------------------------------------------------
+# The account you use to log in and run sudo. Root login is disabled, so this
+# user is how you reach the server after the first run.
+admin_user: sysadmin
+
+# Public SSH keys allowed to log in as admin_user. Paste the content of your
+# ~/.ssh/id_ed25519.pub (or similar). At least one key is required.
+admin_ssh_keys: []
+
+# Remove keys from admin_user's authorized_keys that are not in admin_ssh_keys.
+# Leave false until you are sure your keys are correct.
+admin_ssh_keys_exclusive: false
+
+# Password hash for admin_user. sudo asks for this password. SSH password
+# login stays disabled. Set vault_admin_password_hash in the vault file.
+admin_password_hash: "{{ vault_admin_password_hash | default('') }}"
+
+# Let admin_user run sudo without a password. Less safe: anyone with the SSH
+# key becomes root. When true, admin_password_hash may stay empty.
+admin_sudo_nopasswd: false
+
+# --- SSH --------------------------------------------------------------------
+# The port sshd already listens on. This project does not change the SSH port.
+# The firewall allows this port, and the play stops if nothing listens on it.
+ssh_port: 22
+
+# Optional list of users allowed to log in over SSH (sshd AllowUsers).
+# Empty means no extra restriction. If you set it, it must include the user
+# Ansible connects as, or the play stops before applying it.
+ssh_allow_users: []
+
+# --- Firewall (UFW) ---------------------------------------------------------
+# Extra TCP ports to open to everyone, besides SSH. The Caddy playbook opens
+# 80 and 443 itself, so you do not need to list them here.
+firewall_allowed_tcp_ports: []
+
+# --- fail2ban ---------------------------------------------------------------
+# Ban IP addresses that fail SSH login many times. Optional: with password
+# login disabled it mostly reduces log noise.
+fail2ban_enabled: true
+fail2ban_sshd_maxretry: 5
+fail2ban_sshd_bantime: 1h
+fail2ban_sshd_findtime: 10m
+
+# --- Docker (playbooks/docker.yml) ------------------------------------------
+docker_enabled: false
+
+# Users added to the docker group. Members of this group control the Docker
+# daemon, which is the same as root access. Empty by default: use sudo docker.
+docker_users: []
+
+# Address that "docker run -p 8080:80" publishes on, for the default bridge
+# network. 127.0.0.1 keeps container ports private. Docker port publishing
+# bypasses UFW, so 0.0.0.0 would expose them to the internet.
+docker_default_bind_ip: 127.0.0.1
+
+# --- Caddy (playbooks/caddy.yml) --------------------------------------------
+caddy_enabled: false
+
+# Site address in the Caddyfile. Use your domain (example.com) to get HTTPS
+# automatically. ":80" serves plain HTTP on any address, useful for testing.
+caddy_site_address: ":80"

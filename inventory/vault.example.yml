@@ -1,0 +1,16 @@
+---
+# Example secrets file. It holds placeholders only.
+#
+# 1. Copy it to the place Ansible loads it from:
+#      cp inventory/vault.example.yml inventory/group_vars/all/vault.yml
+# 2. Replace the values.
+# 3. Encrypt it:
+#      ansible-vault encrypt inventory/group_vars/all/vault.yml
+#
+# This example is kept outside group_vars on purpose, so Ansible never loads
+# the placeholder values by mistake.
+
+# Password hash for admin_user, used by sudo. Create one with:
+#   openssl passwd -6
+# (OpenSSL 3 or later, or run it on the server.) Paste the whole $6$... line.
+vault_admin_password_hash: "$6$replace-me$replace-me"
