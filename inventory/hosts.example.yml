@@ -10,6 +10,11 @@ all:
       # First run: the user your provider gave you (often root or ubuntu).
       # After the first run root login is disabled. Then use admin_user.
       ansible_user: root
+      # Ubuntu 26.04 only, when Ansible logs in as admin_user and sudo needs
+      # a password (ansible-playbook -K): ansible-core 2.21.5 does not
+      # recognise the password prompt of sudo-rs, the default sudo on 26.04.
+      # Use the classic sudo that 26.04 also ships:
+      # ansible_become_exe: sudo.ws
       # Public keys for the admin user. Use your own key here.
       admin_ssh_keys:
         - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIExampleKeyReplaceMe you@laptop"
