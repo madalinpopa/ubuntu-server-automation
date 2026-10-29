@@ -2,7 +2,7 @@
 
 This repository sets up a fresh Ubuntu server (a VPS or a local machine) with Ansible. It creates an admin user, locks SSH down to key login, turns on the firewall and automatic security updates, and can optionally install Docker, Caddy and a few self-hosted apps.
 
-I first built it as a hands-on workshop for [OmniOpenCon 2024](https://omniopencon.org/). Back then the README walked you through building your own Ansible project step by step. The project is now a complete, tested set of playbooks that you can run as it is, and the docs still explain every step for people who are learning.
+I first built it as a hands-on workshop for [OmniOpenCon 2024](https://omniopencon.org/). Back then the README walked you through building your own Ansible project step by step. The project is now a complete, tested set of playbooks that you can run as it is, and the docs still explain every step for people who are learning. The original workshop version is still available at [commit a662663](https://github.com/madalinpopa/ubuntu-server-automation/tree/a662663), and [How this project uses Ansible](docs/explanation/how-this-project-uses-ansible.md) covers the Ansible basics it taught.
 
 ## What it does
 
@@ -126,6 +126,7 @@ Reference:
 
 Explanation:
 
+- [How this project uses Ansible](docs/explanation/how-this-project-uses-ansible.md): playbooks, inventory, `ansible.cfg`, variables and handlers, for people new to Ansible
 - [Security model and tradeoffs](docs/explanation/security-model.md)
 
 ## Contributing

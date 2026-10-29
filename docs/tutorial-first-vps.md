@@ -29,6 +29,8 @@ It takes about an hour the first time. You need no Ansible experience. If the Li
 - **become**: Ansible's word for running a task as root with sudo.
 - **Idempotent**: running the same playbook twice gives the same result. The second run changes nothing and reports `changed=0`.
 
+New to Ansible? [How this project uses Ansible](explanation/how-this-project-uses-ansible.md) explains these words with a small playbook you can run on your own computer.
+
 ## Step 1: Get a server
 
 Create a VPS with **Ubuntu 24.04 LTS or Ubuntu 26.04 LTS**. Most providers have both images, for example DigitalOcean, Hetzner, Linode or Vultr. Other releases are refused by the playbooks.
