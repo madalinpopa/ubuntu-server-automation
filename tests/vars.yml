@@ -13,3 +13,40 @@ vault_admin_password_hash: "$6$limatestsalt$jyFla3RiorfgtXPtjTqMZFCjAfaexQHghaJJ
 # Turn on the optional parts so the tests cover them.
 docker_enabled: true
 caddy_enabled: true
+
+# Use Caddy's local certificate authority: the test domains below are not
+# public, so Let's Encrypt cannot issue certificates for them.
+caddy_local_certs: true
+
+# Optional services. All of them are turned on in the test.
+postgresql_enabled: true
+pgadmin_enabled: true
+gitea_enabled: true
+umami_enabled: true
+semaphore_enabled: true
+memos_enabled: true
+ntfy_enabled: true
+
+# Fake domains (.test is reserved for testing, RFC 2606). verify.yml reaches
+# them through Caddy with curl --resolve, so no DNS is needed.
+pgadmin_domain: pgadmin.ust.test
+gitea_domain: git.ust.test
+umami_domain: umami.ust.test
+semaphore_domain: semaphore.ust.test
+memos_domain: memos.ust.test
+ntfy_domain: ntfy.ust.test
+
+# Throwaway secrets for the disposable VMs only.
+vault_postgresql_password: lima-test-postgres-password
+vault_pgadmin_password: lima-test-pgadmin-password
+vault_gitea_admin_password: lima-test-gitea-admin-password
+vault_gitea_db_password: lima-test-gitea-db-password
+vault_gitea_secret_key: lima-test-gitea-secret-key-not-for-real-use
+vault_umami_admin_password: lima-test-umami-admin-password
+vault_umami_app_secret: lima-test-umami-app-secret-not-for-real-use
+vault_umami_db_password: lima-test-umami-db-password
+vault_semaphore_admin_password: lima-test-semaphore-admin-password
+vault_semaphore_db_password: lima-test-semaphore-db-password
+vault_semaphore_access_key_encryption: bGltYS10ZXN0LW9ubHktbm90LWEtcmVhbC1rZXkhISE=  # base64 of "lima-test-only-not-a-real-key!!!"
+vault_memos_admin_password: lima-test-memos-admin-password
+vault_ntfy_admin_password: lima-test-ntfy-admin-password

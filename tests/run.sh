@@ -3,12 +3,15 @@
 #
 # For each Ubuntu release it:
 #   1. creates a fresh VM
-#   2. runs playbooks/site.yml (base + Docker + Caddy)
+#   2. runs playbooks/site.yml (base + Docker + Caddy + all optional
+#      services, with fake .test domains and Caddy's local certificates)
 #   3. runs it again and fails if anything changed (idempotency)
 #   4. starts a test container published with "-p 8080:8080"
-#   5. runs playbooks/verify.yml on the VM
+#   5. runs playbooks/verify.yml on the VM (includes the service containers
+#      and the Caddy sites)
 #   6. runs playbooks/verify_external.yml from this computer against the
-#      VM's shared network address (vzNAT, 192.168.64.x)
+#      VM's shared network address (vzNAT, 192.168.64.x): closed service
+#      ports and the service sites over HTTPS
 #   7. deletes the VM (set KEEP_VMS=1 to keep it)
 #
 # Usage:   tests/run.sh [24.04] [26.04]      (default: both)
