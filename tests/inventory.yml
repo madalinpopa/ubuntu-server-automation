@@ -1,0 +1,11 @@
+---
+# Inventory for the Lima test VMs created by tests/run.sh.
+# Each host name must match "Host lima-<vm name>" in Lima's ssh.config.
+all:
+  children:
+    lima:
+      hosts:
+        lima-ust-noble:
+          ansible_ssh_common_args: "-F {{ lookup('env', 'HOME') }}/.lima/ust-noble/ssh.config"
+        lima-ust-resolute:
+          ansible_ssh_common_args: "-F {{ lookup('env', 'HOME') }}/.lima/ust-resolute/ssh.config"

@@ -1,0 +1,15 @@
+---
+# Test-only settings for the disposable Lima VMs. Never use these on a real
+# server. tests/run.sh passes this file with -e, so it overrides everything.
+
+# Lima's own SSH key, so Ansible can log in as the admin user.
+admin_ssh_keys:
+  - "{{ lookup('ansible.builtin.file', lookup('ansible.builtin.env', 'HOME') + '/.lima/_config/user.pub') }}"
+
+# Hash of the throwaway password "lima-test-password".
+# Made with: openssl passwd -6 -salt limatestsalt 'lima-test-password'
+vault_admin_password_hash: "$6$limatestsalt$jyFla3RiorfgtXPtjTqMZFCjAfaexQHghaJJqObImAsh8xKcWm6uatz2lFEH/lvSlevImN9XEjizycuxKgjVe1"
+
+# Turn on the optional parts so the tests cover them.
+docker_enabled: true
+caddy_enabled: true
