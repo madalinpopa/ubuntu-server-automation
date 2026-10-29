@@ -14,6 +14,9 @@
       {{ ([ssh_port | int]
           + (verify_allowed_public_tcp_ports | map('int') | list)
           + ([80, 443] if caddy_enabled | bool else [])) | unique | sort }}
+    # UFW rules you added by hand on purpose, as "ufw status" shows them in
+    # its first column, for example ["51820/udp"]. Any other allow rule fails.
+    verify_extra_ufw_rules: []
     verify_units_base:
       - ssh.socket
       - ufw.service
@@ -217,6 +220,29 @@
         fail_msg: "UFW has no IPv4 and IPv6 allow rule for {{ item }}/tcp."
         quiet: true
       loop: "{{ verify_expected_public_tcp_ports }}"
+
+    - name: Find allow rules for ports that are not expected
+      # The playbooks only add rules. A port removed from
+      # firewall_allowed_tcp_ports, or 80 and 443 after turning Caddy off,
+      # stays open until the rule is deleted.
+      ansible.builtin.set_fact:
+        verify_unexpected_ufw_rules: >-
+          {{ verify_ufw.stdout_lines
+             | select('search', ' ALLOW IN ')
+             | map('regex_replace', '^(\S+).*$', '\1')
+             | unique
+             | reject('in', (verify_expected_public_tcp_ports | map('regex_replace', '$', '/tcp') | list)
+                            + verify_extra_ufw_rules)
+             | list }}
+
+    - name: Check that UFW allows no other ports
+      ansible.builtin.assert:
+        that: verify_unexpected_ufw_rules | length == 0
+        fail_msg: >-
+          UFW allows {{ verify_unexpected_ufw_rules }}, which are not expected.
+          Delete a rule with "sudo ufw status numbered" and "sudo ufw delete NUMBER",
+          or add the port to firewall_allowed_tcp_ports if you want it open.
+        quiet: true
 
     - name: Read listening TCP sockets
       ansible.builtin.command: ss -Htln

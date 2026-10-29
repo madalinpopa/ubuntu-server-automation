@@ -47,7 +47,7 @@ These are standard Ansible variables. Set them per host in `inventory/hosts.yml`
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `firewall_allowed_tcp_ports` | `[]` | Extra TCP ports to open to everyone. SSH is always allowed. The Caddy playbook opens 80 and 443 itself |
+| `firewall_allowed_tcp_ports` | `[]` | Extra TCP ports to open to everyone. SSH is always allowed. The Caddy playbook opens 80 and 443 itself. Removing a port from the list does not close it: run `sudo ufw delete allow PORT/tcp`. `verify.yml` fails while the old rule is there |
 
 ## fail2ban
 
@@ -196,6 +196,7 @@ These have defaults inside the playbooks. Override them with `-e` on the command
 | Variable | Playbook | Default | Meaning |
 |---|---|---|---|
 | `verify_allowed_public_tcp_ports` | `verify.yml` | `firewall_allowed_tcp_ports` | Extra ports that may listen on public addresses |
+| `verify_extra_ufw_rules` | `verify.yml` | `[]` | UFW rules you added by hand on purpose, as the first column of `ufw status` shows them, for example `["51820/udp"]`. Any other unexpected allow rule fails the check |
 | `verify_external_address` | `verify_external.yml` | `ansible_host` | Address to test from outside |
 | `verify_external_ssh_args` | `verify_external.yml` | `[]` | Extra options for the `ssh` command, for example `["-i", "~/.ssh/id_ed25519"]` |
 | `verify_external_open_tcp_ports` | `verify_external.yml` | `ssh_port`, `firewall_allowed_tcp_ports`, and 80 and 443 with Caddy | Ports that must accept connections |

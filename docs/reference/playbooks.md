@@ -97,7 +97,7 @@ All containers use the restart policy `unless-stopped` and a health check.
 | Admin user | In the `sudo` group; has a password hash (unless `admin_sudo_nopasswd`); `~/.ssh` (mode 0700) and `authorized_keys` (mode 0600) exist and belong to the user |
 | SSH login | A new SSH connection as `admin_user` with a key works |
 | SSH config | `00-hardening.conf` exists, root-owned, mode 0644. `sshd -T` shows `port <ssh_port>`, `permitrootlogin no`, `passwordauthentication no`, `kbdinteractiveauthentication no`, `pubkeyauthentication yes`, `x11forwarding no` |
-| Firewall | UFW active, `deny (incoming)`, `allow (outgoing)`, and an IPv4 and IPv6 allow rule for each expected port (SSH, `firewall_allowed_tcp_ports`, 80 and 443 with Caddy) |
+| Firewall | UFW active, `deny (incoming)`, `allow (outgoing)`, and an IPv4 and IPv6 allow rule for each expected port (SSH, `firewall_allowed_tcp_ports`, 80 and 443 with Caddy). No other port has an allow rule, unless it is in `verify_extra_ufw_rules` |
 | Listening ports | Every TCP port listening on a non-loopback address is an expected port. This is how a Docker port that bypasses UFW is caught |
 | fail2ban | `fail2ban-client status sshd` succeeds |
 | Docker | `daemon.json` sets `ip` to `docker_default_bind_ip`; `docker` group members equal `docker_users`; `docker info` answers |
