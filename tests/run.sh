@@ -63,9 +63,15 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Fail unless every host in the PLAY RECAP has changed=0, failed=0, unreachable=0.
+# Fail unless the PLAY RECAP has one line per host (default: every test
+# host) and every line has failed=0 and unreachable=0. With want_changed=0,
+# every line must also have changed=0.
 check_recap() {
-  local log=$1 want_changed=$2 bad
+  local log=$1 want_changed=$2 want_hosts=${3:-${#HOSTS[@]}} found bad
+  found=$(grep -cE '^lima-[a-z-]+ +: ok=' "$log" || true)
+  if [ "$found" -ne "$want_hosts" ]; then
+    echo "FAIL: expected $want_hosts host(s) in the PLAY RECAP of $log, found $found"; return 1
+  fi
   bad=$(grep -E '^lima-[a-z-]+ +: ok=' "$log" | grep -vE "changed=0 .*unreachable=0 +failed=0" || true)
   if [ "$want_changed" = "0" ] && [ -n "$bad" ]; then
     echo "FAIL: not idempotent or failed. Recap lines:"; echo "$bad"; return 1
@@ -173,7 +179,7 @@ for vm in "${VMS[@]}"; do
       playbooks/verify_external.yml >"$log" 2>&1; then
     echo "FAIL: verify_external.yml for $vm"; tail -30 "$log"; exit 1
   fi
-  check_recap "$log" 0
+  check_recap "$log" 0 1
 done
 echo "OK: verify_external.yml passed"
 
