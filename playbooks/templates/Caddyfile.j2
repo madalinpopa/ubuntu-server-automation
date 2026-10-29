@@ -1,0 +1,7 @@
+# {{ ansible_managed }}
+# Caddy configuration. Docs: https://caddyserver.com/docs/caddyfile
+
+{{ caddy_site_address }} {
+	root * /var/www/html
+	file_server
+}

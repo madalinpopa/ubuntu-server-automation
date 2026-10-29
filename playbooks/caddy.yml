@@ -1,0 +1,16 @@
+---
+# Optional: Caddy web server. Runs only when caddy_enabled is true.
+# Run: ansible-playbook playbooks/caddy.yml
+
+- name: Caddy web server
+  hosts: all
+  become: true
+
+  handlers:
+    - name: Import handlers
+      ansible.builtin.import_tasks: ../handlers/main.yml
+
+  tasks:
+    - name: Install and configure Caddy
+      ansible.builtin.import_tasks: ../tasks/caddy.yml
+      when: caddy_enabled | bool

@@ -1,48 +1,86 @@
 ---
-- name: Add Caddy GPG apt Key
-  vars:
-    keyrings: /usr/share/keyrings
-    apt_repo: https://dl.cloudsmith.io/public/caddy/testing/deb/debian  
-  block:
-    - name: Download Caddy gpg key
-      ansible.builtin.get_url:
-        url: https://dl.cloudsmith.io/public/caddy/stable/gpg.key        
-        dest: "{{ keyrings }}/caddy-stable-archive-keyring.asc"
+# Caddy web server from the official stable apt repository.
+# Source: https://caddyserver.com/docs/install#debian-ubuntu-raspbian
+# Caddy gets HTTPS certificates on its own when caddy_site_address is a
+# domain name that points to this server and ports 80 and 443 are open.
 
+- name: Remove the old Caddy testing repository file
+  # Older versions of this project added the testing channel by mistake.
+  ansible.builtin.file:
+    path: /etc/apt/sources.list.d/dl_cloudsmith_io_public_caddy_testing_deb_debian.list
+    state: absent
 
-    - name: Add Caddy apt repository
-      ansible.builtin.apt_repository:
-        repo: "deb [signed-by={{ keyrings }}/caddy-stable-archive-keyring.asc] {{ apt_repo }} any-version main"
-        state: present
+- name: Create the apt keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
 
-    - name: Add Caddy source repository
-      ansible.builtin.apt_repository:
-        repo: "deb-src [signed-by={{ keyrings }}/caddy-stable-archive-keyring.asc] {{ apt_repo }} any-version main"
-        state: present
+- name: Download Caddy's apt signing key
+  ansible.builtin.get_url:
+    url: https://dl.cloudsmith.io/public/caddy/stable/gpg.key
+    dest: /etc/apt/keyrings/caddy-stable.asc
+    owner: root
+    group: root
+    mode: "0644"
 
-- name: Install Caddy package
-  ansible.builtin.package:
+- name: Add Caddy's stable apt repository
+  ansible.builtin.deb822_repository:
+    name: caddy-stable
+    types: deb
+    uris: https://dl.cloudsmith.io/public/caddy/stable/deb/debian
+    suites: any-version
+    components: main
+    signed_by: /etc/apt/keyrings/caddy-stable.asc
+    state: present
+  register: caddy_repo
+
+- name: Install Caddy
+  ansible.builtin.apt:
     name: caddy
     state: present
+    # Refresh the package index only when the repository was just added.
+    update_cache: "{{ caddy_repo is changed }}"
 
-- name: Enable caddy service
-  ansible.builtin.service:
-    name: caddy.service
-    enabled: yes
-
-- name: Copy Caddy configuration file
-  ansible.builtin.template:
-    src: Caddyfile.j2
-    dest: /etc/caddy/Caddyfile
-  notify: restart_caddy
-
-- name: Create Caddy web root directory
+- name: Create the web root directory
   ansible.builtin.file:
     path: /var/www/html
     state: directory
-    mode: '0755'
+    owner: root
+    group: root
+    mode: "0755"
 
-- name: Copy index.html file
+- name: Copy the welcome page
   ansible.builtin.copy:
     src: index.html
     dest: /var/www/html/index.html
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Write the Caddyfile
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: /etc/caddy/Caddyfile
+    owner: root
+    group: root
+    mode: "0644"
+    validate: caddy validate --adapter caddyfile --config %s
+  notify: Reload caddy
+
+- name: Start Caddy and enable it at boot
+  ansible.builtin.systemd_service:
+    name: caddy.service
+    enabled: true
+    state: started
+
+- name: Allow HTTP and HTTPS through the firewall
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - "80"
+    - "443"
