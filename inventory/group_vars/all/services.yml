@@ -114,7 +114,7 @@ ntfy_admin_password: "{{ vault_ntfy_admin_password | default('') }}"
 
 # --- Caddy sites for the services --------------------------------------------
 # Built from the settings above: one entry per enabled service with a domain.
-# templates/Caddyfile.j2 adds a reverse_proxy site for each. Do not edit.
+# playbooks/templates/Caddyfile.j2 adds a reverse_proxy site for each. Do not edit.
 caddy_service_sites: >-
   {{ ([{'domain': pgadmin_domain, 'port': pgadmin_port}] if pgadmin_enabled | bool and pgadmin_domain | length > 0 else [])
      + ([{'domain': gitea_domain, 'port': gitea_port}] if gitea_enabled | bool and gitea_domain | length > 0 else [])
