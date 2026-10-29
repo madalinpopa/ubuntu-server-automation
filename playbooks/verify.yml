@@ -151,10 +151,13 @@
         label: "{{ item.item.path }}"
 
     - name: Check that the admin user can log in with an SSH key
+      # A new connection (ControlPath=none), so an open shared session
+      # cannot hide a failed login.
       ansible.builtin.command: id -un
       become: false
       vars:
         ansible_user: "{{ admin_user }}"
+        ansible_ssh_args: "-o ControlMaster=no -o ControlPath=none"
         ansible_ssh_extra_args: "-o PreferredAuthentications=publickey"
       changed_when: false
 
