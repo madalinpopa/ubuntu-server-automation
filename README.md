@@ -43,6 +43,9 @@ vim inventory/hosts.yml
 
 # 3. Store the admin password hash in an encrypted vault file
 openssl passwd -6          # copy the $6$... line it prints
+# macOS's own openssl (LibreSSL) has no -6. Use Homebrew's OpenSSL instead:
+#   $(brew --prefix openssl)/bin/openssl passwd -6
+# or run it on the server: ssh -t root@SERVER openssl passwd -6
 cp inventory/vault.example.yml inventory/group_vars/all/vault.yml
 vim inventory/group_vars/all/vault.yml
 ansible-vault encrypt inventory/group_vars/all/vault.yml

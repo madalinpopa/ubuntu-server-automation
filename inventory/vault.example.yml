@@ -12,7 +12,8 @@
 
 # Password hash for admin_user, used by sudo. Create one with:
 #   openssl passwd -6
-# (OpenSSL 3 or later, or run it on the server.) Paste the whole $6$... line.
+# (OpenSSL 3 or later. On macOS: $(brew --prefix openssl)/bin/openssl passwd -6,
+# or run it on the server.) Paste the whole $6$... line.
 vault_admin_password_hash: "$6$replace-me$replace-me"
 
 # --- Optional services --------------------------------------------------------

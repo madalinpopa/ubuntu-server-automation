@@ -214,7 +214,13 @@ The admin user logs in with your SSH key, but `sudo` asks for a password. You al
 
    It prints one line that starts with `$6$`. That is a SHA-512 password hash, the same format Ubuntu uses in `/etc/shadow`.
 
-   macOS ships LibreSSL, which may not support `-6`. In that case run the same command on the server, where `-t` lets it ask for the password:
+   macOS ships LibreSSL, which may not support `-6` (it prints `unknown option '-6'`). If you use Homebrew, its OpenSSL works:
+
+   ```bash
+   $(brew --prefix openssl)/bin/openssl passwd -6
+   ```
+
+   Otherwise run the same command on the server, where `-t` lets it ask for the password:
 
    ```bash
    ssh -t root@203.0.113.10 openssl passwd -6
