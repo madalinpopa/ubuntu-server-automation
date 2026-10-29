@@ -10,13 +10,14 @@ For each Ubuntu release (24.04 and 26.04 by default) it:
 
 1. creates a fresh VM,
 2. allows SSH key login as root, like on a fresh VPS, and runs `playbooks/site.yml` as root with Docker, Caddy and all seven services turned on, using fake `.test` domains and Caddy's local certificates, and checks in the log that each app's Caddy site was written only after its admin account was set up,
-3. checks that root can no longer log in, then runs `site.yml` again as Lima's normal user and fails if anything changed (the idempotency check),
+3. checks that root can no longer log in, then runs `site.yml` again as the admin user (`sysadmin`) with its sudo password, like you would after the first run, and fails if anything changed (the idempotency check). On 26.04 it uses `sudo.ws`, see [sudo-rs](../explanation/security-model.md#sudo-rs-on-ubuntu-2604),
 4. starts a test container published with `-p 8080:8080`, to prove Docker keeps it on 127.0.0.1,
 5. runs `playbooks/verify.yml` on the VM,
 6. runs `playbooks/verify_external.yml` from your computer against the VM's own network address,
-7. deletes the VM.
+7. tries to log in from your computer as a user that does not exist until fail2ban bans your address, checks the ban with `fail2ban-client`, then lifts it,
+8. deletes the VM.
 
-The test settings are in `tests/vars.yml`. They use Lima's SSH key as the admin key and throwaway passwords. Never use that file for a real server. `tests/inventory.yml` reads the SSH settings Lima writes for each VM.
+The test settings are in `tests/vars.yml`. They use Lima's SSH key as the admin key and throwaway passwords. The admin user's sudo password is `lima-test-password`. Never use that file for a real server. `tests/inventory.yml` reads the SSH settings Lima writes for each VM.
 
 ## Prerequisites
 
@@ -65,10 +66,12 @@ FIRST_RUN_AS_ROOT=0 tests/run.sh
 A full run took about 6 minutes once the Ubuntu images were cached. The output ends with:
 
 ```
+OK: each service site was published after its admin account was set up
 OK: first run as root finished and root login is now refused
 OK: second run changed nothing
 OK: verify.yml passed
 OK: verify_external.yml passed
+OK: fail2ban bans after failed logins
 == All tests passed for Ubuntu 24.04 26.04
 ```
 
@@ -110,11 +113,12 @@ For `playbooks/verify_external.yml`, pass the key to its `ssh` command too: `-e 
 
 ## What the tests cover, and what they do not
 
-Covered on Ubuntu 24.04 and 26.04 (arm64): a first run as root that finishes in one go and leaves root login turned off, the base setup, Docker, Caddy, all seven services, a second run with `changed=0`, all checks in `verify.yml` and `verify_external.yml`, and `become` with a sudo password on 24.04 and on 26.04 with `sudo.ws`.
+Covered on Ubuntu 24.04 and 26.04 (arm64): a first run as root that finishes in one go and leaves root login turned off, the base setup, Docker, Caddy, all seven services, a second run with `changed=0`, all checks in `verify.yml` and `verify_external.yml`, `become` with a sudo password as the admin user (on 26.04 with `sudo.ws`), and a fail2ban ban after failed logins.
 
 Not covered yet:
 
 - amd64 (x86_64) servers. Only arm64 VMs were tested.
+- `become` with sudo-rs and a password on 26.04 (it fails with ansible-core 2.21.5, see [sudo-rs](../explanation/security-model.md#sudo-rs-on-ubuntu-2604)), and `admin_sudo_nopasswd: true`.
 - Real domains with Let's Encrypt certificates. The tests use Caddy's local certificate authority.
 - Reboots.
 - Upgrading from an older version of this project, including old container names, volumes and port 2222.

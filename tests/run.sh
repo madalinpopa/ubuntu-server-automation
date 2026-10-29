@@ -8,14 +8,17 @@
 #      services, with fake .test domains and Caddy's local certificates),
 #      and checks that each app's Caddy site came after its admin account
 #   3. checks that root can no longer log in, then runs site.yml again as
-#      Lima's normal user and fails if anything changed (idempotency)
+#      the admin user with its sudo password, like the day-2 workflow
+#      (sudo.ws on 26.04), and fails if anything changed (idempotency)
 #   4. starts a test container published with "-p 8080:8080"
 #   5. runs playbooks/verify.yml on the VM (includes the service containers
 #      and the Caddy sites)
 #   6. runs playbooks/verify_external.yml from this computer against the
 #      VM's shared network address (vzNAT, 192.168.64.x): closed service
 #      ports and the service sites over HTTPS
-#   7. deletes the VM (set KEEP_VMS=1 to keep it)
+#   7. makes failed SSH logins from this computer until fail2ban bans its
+#      address, checks the ban, then lifts it
+#   8. deletes the VM (set KEEP_VMS=1 to keep it)
 #
 # Usage:   tests/run.sh [24.04] [26.04]      (default: both)
 #          FIRST_RUN_AS_ROOT=0 tests/run.sh   first run as Lima's user instead
@@ -36,6 +39,12 @@ mkdir -p "$LOG_DIR"
 INVENTORY=tests/inventory.yml
 TEST_VARS=tests/vars.yml
 SSH_KEY="$HOME/.lima/_config/user"
+# admin_user from inventory/group_vars/all/vars.yml, and the throwaway sudo
+# password whose hash is in tests/vars.yml.
+ADMIN_USER=sysadmin
+BECOME_PASS_FILE=$(mktemp)
+chmod 600 "$BECOME_PASS_FILE"
+printf '%s\n' 'lima-test-password' >"$BECOME_PASS_FILE"
 
 vm_name() {
   case "$1" in
@@ -54,6 +63,7 @@ done
 LIMIT=$(IFS=,; echo "${HOSTS[*]}")
 
 cleanup() {
+  rm -f "$BECOME_PASS_FILE"
   if [ "${KEEP_VMS:-0}" = "1" ]; then
     echo "KEEP_VMS=1: leaving VMs running: ${VMS[*]}"
   else
@@ -151,8 +161,12 @@ if [ "${FIRST_RUN_AS_ROOT:-1}" = "1" ]; then
   echo "OK: first run as root finished and root login is now refused"
 fi
 
-# 3. Second run must change nothing.
-run_playbook site-run2 playbooks/site.yml
+# 3. Second run must change nothing. It connects as the admin user and
+#    uses its sudo password, as described in the README. On 26.04 the
+#    inventory sets test_admin_become_exe to sudo.ws, because Ansible
+#    does not recognise the password prompt of sudo-rs yet.
+run_playbook site-run2 -u "$ADMIN_USER" --become-password-file "$BECOME_PASS_FILE" \
+  -e 'ansible_become_exe={{test_admin_become_exe}}' playbooks/site.yml
 check_recap "$LOG_DIR/site-run2.log" 0
 echo "OK: second run changed nothing"
 
@@ -182,5 +196,33 @@ for vm in "${VMS[@]}"; do
   check_recap "$log" 0 1
 done
 echo "OK: verify_external.yml passed"
+
+# 7. fail2ban: failed SSH logins from this computer must get its address
+#    banned. A user that does not exist fails at once ("Invalid user").
+#    Lima's own connection is not affected: it comes from 192.168.5.2 on
+#    24.04 and over vsock on 26.04.
+for vm in "${VMS[@]}"; do
+  ip=$(ssh -F "$HOME/.lima/$vm/ssh.config" "lima-$vm" \
+    "ip -4 -o addr show lima0 | awk '{print \$4}' | cut -d/ -f1")
+  echo "== fail2ban check for $vm at $ip"
+  for _ in 1 2 3 4 5 6 7 8; do
+    ssh -o BatchMode=yes -o ConnectTimeout=5 -o IdentitiesOnly=yes -o IdentityFile=/dev/null \
+      -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+      "no-such-user@$ip" true >/dev/null 2>&1 || true
+  done
+  banned=""
+  for _ in $(seq 1 15); do
+    banned=$(ssh -F "$HOME/.lima/$vm/ssh.config" "lima-$vm" \
+      "sudo fail2ban-client get sshd banned" 2>/dev/null || true)
+    case "$banned" in *192.168.64.*) break ;; esac
+    sleep 2
+  done
+  case "$banned" in
+    *192.168.64.*) echo "OK: fail2ban banned $banned on $vm" ;;
+    *) echo "FAIL: fail2ban did not ban this computer on $vm (banned: $banned)"; exit 1 ;;
+  esac
+  ssh -F "$HOME/.lima/$vm/ssh.config" "lima-$vm" "sudo fail2ban-client unban --all" >/dev/null
+done
+echo "OK: fail2ban bans after failed logins"
 
 echo "== All tests passed for Ubuntu ${VERSIONS[*]}"

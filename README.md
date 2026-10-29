@@ -84,7 +84,7 @@ Both must end with `failed=0`. Each failed check prints what is wrong. See [what
 
 ## Testing
 
-`tests/run.sh` creates throwaway Ubuntu 24.04 and 26.04 virtual machines with [Lima](https://lima-vm.io/), runs the full setup as root with every service turned on, runs it again as a normal user to prove nothing changes, runs both check playbooks, and deletes the VMs.
+`tests/run.sh` creates throwaway Ubuntu 24.04 and 26.04 virtual machines with [Lima](https://lima-vm.io/), runs the full setup as root with every service turned on, runs it again as the admin user with its sudo password to prove nothing changes, runs both check playbooks, checks that fail2ban bans failed logins, and deletes the VMs.
 
 ```bash
 tests/run.sh

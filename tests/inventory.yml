@@ -7,5 +7,10 @@ all:
       hosts:
         lima-ust-noble:
           ansible_ssh_common_args: "-F {{ lookup('env', 'HOME') }}/.lima/ust-noble/ssh.config"
+          # sudo program for the run with a sudo password in tests/run.sh.
+          test_admin_become_exe: sudo
         lima-ust-resolute:
           ansible_ssh_common_args: "-F {{ lookup('env', 'HOME') }}/.lima/ust-resolute/ssh.config"
+          # Ansible does not recognise the password prompt of sudo-rs, the
+          # default sudo on 26.04, yet. sudo.ws is the classic sudo.
+          test_admin_become_exe: sudo.ws

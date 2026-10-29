@@ -79,7 +79,7 @@ The admin user has a password, stored as a hash in the vault. It is used for `su
 
 Ubuntu 26.04 replaces `sudo` with **sudo-rs**, a rewrite in Rust. The classic sudo is still installed as `sudo.ws`.
 
-In the tests with ansible-core 2.21.5, `become` with a sudo password worked on 24.04 but failed on 26.04 with "Timeout waiting for privilege escalation prompt". sudo-rs prints its password prompt in a different form, and Ansible's sudo plugin in 2.21.5 does not recognise it. Passwordless sudo worked with sudo-rs.
+When I tried it by hand with ansible-core 2.21.5, `become` with a sudo password worked on 24.04 but failed on 26.04 with "Timeout waiting for privilege escalation prompt". sudo-rs prints its password prompt in a different form, and Ansible's sudo plugin in 2.21.5 does not recognise it. Passwordless sudo worked with sudo-rs.
 
 The workaround is to tell Ansible to use the classic sudo for that host:
 
@@ -87,9 +87,9 @@ The workaround is to tell Ansible to use the classic sudo for that host:
 ansible_become_exe: sudo.ws
 ```
 
-With it, the full playbook and `verify.yml` passed on 26.04. Ansible merged sudo-rs prompt support upstream, and a later release may make this setting unnecessary. That has not been tested here.
+With it, the playbooks work on 26.04. `tests/run.sh` checks this: its second run connects as the admin user with the sudo password, and uses `sudo.ws` on 26.04. Ansible merged sudo-rs prompt support upstream, and a later release may make this setting unnecessary. That has not been tested here.
 
-`visudo` from sudo-rs validated the passwordless sudo file in the tests, so `admin_sudo_nopasswd` works on 26.04 too.
+`visudo` from sudo-rs validated the passwordless sudo file when I tried `admin_sudo_nopasswd: true` by hand, so it works on 26.04 too. `tests/run.sh` does not test that setting.
 
 ## Firewall
 
@@ -138,7 +138,7 @@ Docker also has a rootless mode. It changes networking and cannot bind ports bel
 
 fail2ban reads the SSH log and bans IP addresses that fail to log in too often. With password login off, nobody can guess their way in anyway, so on this server it mostly reduces log noise and wasted connections. It is on by default because it is cheap, and you can turn it off with `fail2ban_enabled: false`.
 
-Ubuntu's package already enables the `sshd` jail, reading from the systemd journal and banning with nftables. The project only sets the port, `maxretry`, `findtime` and `bantime` in `/etc/fail2ban/jail.d/sshd.local`. On both 24.04 and 26.04 the tests confirmed that failed logins are counted and an IP gets banned.
+Ubuntu's package already enables the `sshd` jail, reading from the systemd journal and banning with nftables. The project only sets the port, `maxretry`, `findtime` and `bantime` in `/etc/fail2ban/jail.d/sshd.local`. `tests/run.sh` checks on both 24.04 and 26.04 that failed logins from your computer get its address banned, and then lifts the ban.
 
 OpenSSH 9.8 and later (26.04 ships 10.2) also has a built-in penalty system for misbehaving clients, `PerSourcePenalties`, on by default.
 
