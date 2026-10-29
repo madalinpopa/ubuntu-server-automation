@@ -25,6 +25,16 @@
          + (['fail2ban.service'] if fail2ban_enabled | bool else [])
          + (['containerd.service', 'docker.service'] if docker_enabled | bool else [])
          + (['caddy.service'] if caddy_enabled | bool else []) }}
+    # Containers of the optional services that are turned on.
+    verify_containers: >-
+      {{ (['postgres'] if postgresql_enabled | bool else [])
+         + (['pgadmin'] if pgadmin_enabled | bool else [])
+         + (['gitea'] if gitea_enabled | bool else [])
+         + (['umami'] if umami_enabled | bool else [])
+         + (['semaphore'] if semaphore_enabled | bool else [])
+         + (['memos'] if memos_enabled | bool else [])
+         + (['ntfy'] if ntfy_enabled | bool else []) }}
+    verify_caddy_ca: /var/lib/caddy/.local/share/caddy/pki/authorities/local/root.crt
 
   tasks:
     # --- System ---------------------------------------------------------------
@@ -286,3 +296,104 @@
       when:
         - caddy_enabled | bool
         - caddy_site_address is match(':')
+
+    # --- Optional services ----------------------------------------------------
+    - name: Read the service containers
+      community.docker.docker_container_info:
+        name: "{{ item }}"
+      register: verify_container_info
+      loop: "{{ verify_containers }}"
+      # The result includes the container environment, which holds passwords.
+      no_log: true
+
+    - name: Keep the container details the checks need
+      ansible.builtin.set_fact:
+        verify_container_state: >-
+          {{ verify_container_state | default([])
+             + [{'name': item.item,
+                 'exists': item.exists,
+                 'running': item.container.State.Running | default(false),
+                 'health': item.container.State.Health.Status | default('none'),
+                 'restart': item.container.HostConfig.RestartPolicy.Name | default(''),
+                 'bindings': item.container.HostConfig.PortBindings | default({}, true)
+                             | dict2items | map(attribute='value') | flatten,
+                 'networks': item.container.NetworkSettings.Networks | default({}) | list}] }}
+      loop: "{{ verify_container_info.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+      no_log: true
+
+    - name: Check that each service container runs, is healthy and restarts
+      ansible.builtin.assert:
+        that:
+          - item.exists
+          - item.running
+          - item.health == 'healthy'
+          - item.restart == 'unless-stopped'
+        fail_msg: >-
+          Container {{ item.name }}: exists={{ item.exists }}, running={{ item.running }},
+          health={{ item.health }}, restart policy={{ item.restart }}.
+          Expected running, healthy and unless-stopped. See: sudo docker logs {{ item.name }}
+        quiet: true
+      loop: "{{ verify_container_state | default([]) }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Check that service ports are published on 127.0.0.1 only
+      ansible.builtin.assert:
+        that: item.bindings | rejectattr('HostIp', 'equalto', '127.0.0.1') | list | length == 0
+        fail_msg: >-
+          Container {{ item.name }} publishes ports on other addresses: {{ item.bindings }}.
+          Docker-published ports bypass UFW. Use 127.0.0.1:PORT:PORT.
+        quiet: true
+      loop: "{{ verify_container_state | default([]) }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Read the PostgreSQL network
+      community.docker.docker_network_info:
+        name: "{{ postgresql_network }}"
+      register: verify_postgres_network
+      when: postgresql_enabled | bool
+
+    - name: Check that PostgreSQL is private
+      ansible.builtin.assert:
+        that:
+          - verify_postgres_network.network.Internal
+          - (verify_container_state | selectattr('name', 'equalto', 'postgres') | first).bindings | length == 0
+          - (verify_container_state | selectattr('name', 'equalto', 'postgres') | first).networks == [postgresql_network]
+        fail_msg: >-
+          PostgreSQL must have no published ports and be attached only to the internal
+          network {{ postgresql_network }}. See: sudo docker inspect postgres
+        quiet: true
+      when: postgresql_enabled | bool
+
+    - name: Request each service site through Caddy on this server
+      # --resolve sends the request to 127.0.0.1 with the right name for TLS,
+      # so this works before DNS points to the server.
+      ansible.builtin.command:
+        argv: >-
+          {{ ['curl', '-sS', '-o', '/dev/null', '-w', '%{http_code}', '--max-time', '10',
+              '--resolve', item.domain ~ ':443:127.0.0.1']
+             + (['--cacert', verify_caddy_ca] if caddy_local_certs | bool else [])
+             + ['https://' ~ item.domain ~ '/'] }}
+      changed_when: false
+      failed_when: false
+      register: verify_caddy_sites
+      loop: "{{ caddy_service_sites if caddy_enabled | bool else [] }}"
+      loop_control:
+        label: "{{ item.domain }}"
+
+    - name: Check that Caddy proxies each service over HTTPS
+      ansible.builtin.assert:
+        that:
+          - item.rc == 0
+          - item.stdout is match('^[23]')
+        fail_msg: >-
+          https://{{ item.item.domain }} through Caddy returned '{{ item.stdout }}'
+          {{ item.stderr }}. Check "sudo journalctl -u caddy" and the container on
+          127.0.0.1:{{ item.item.port }}.
+        quiet: true
+      loop: "{{ verify_caddy_sites.results }}"
+      loop_control:
+        label: "{{ item.item.domain }}"

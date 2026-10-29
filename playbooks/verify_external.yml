@@ -23,10 +23,17 @@
       {{ [ssh_port | int]
          + (firewall_allowed_tcp_ports | map('int') | list)
          + ([80] if caddy_enabled | bool else [])
-         + ([443] if caddy_enabled | bool and caddy_site_address is not match(':') else []) }}
+         + ([443] if caddy_enabled | bool
+                   and (caddy_site_address is not match(':') or caddy_service_sites | length > 0)
+                   else []) }}
     # Ports that must not be reachable from outside. These are common ports
     # for databases, admin interfaces, the Docker API and Caddy's admin API.
-    verify_external_closed_tcp_ports: [2019, 2375, 2376, 3000, 5432, 8000, 8080, 8081, 9000]
+    # The ports of the optional services are always in the list, whether the
+    # service is on or not: they must only listen on 127.0.0.1.
+    verify_external_closed_tcp_ports: >-
+      {{ ([2019, 2375, 2376, 3000, 5432, 8000, 8080, 8081, 9000]
+          + ([pgadmin_port, gitea_port, umami_port, semaphore_port, memos_port, ntfy_port] | map('int') | list))
+         | unique | sort }}
 
   tasks:
     - name: Check that expected ports are reachable
@@ -91,3 +98,35 @@
           The server should refuse logins without a key and list only "publickey".
           ssh said: {{ verify_external_password_login.stderr }}
         quiet: true
+
+    - name: Request each service site through Caddy from outside
+      # --resolve sends the request to the server address with the right name
+      # for TLS, so this works before DNS points to the server. With
+      # caddy_local_certs the certificate is not checked (-k): it comes from
+      # Caddy's test authority, which this computer does not trust.
+      ansible.builtin.command:
+        argv: >-
+          {{ ['curl', '-sS', '-o', '/dev/null', '-w', '%{http_code}', '--max-time', '10',
+              '--resolve', item.domain ~ ':443:' ~ verify_external_address]
+             + (['-k'] if caddy_local_certs | bool else [])
+             + ['https://' ~ item.domain ~ '/'] }}
+      delegate_to: localhost
+      changed_when: false
+      failed_when: false
+      register: verify_external_sites
+      loop: "{{ caddy_service_sites if caddy_enabled | bool else [] }}"
+      loop_control:
+        label: "{{ item.domain }}"
+
+    - name: Check that each service site answers over HTTPS
+      ansible.builtin.assert:
+        that:
+          - item.rc == 0
+          - item.stdout is match('^[23]')
+        fail_msg: >-
+          https://{{ item.item.domain }} at {{ verify_external_address }} returned
+          '{{ item.stdout }}' {{ item.stderr }}. Check UFW port 443, DNS and Caddy.
+        quiet: true
+      loop: "{{ verify_external_sites.results }}"
+      loop_control:
+        label: "{{ item.item.domain }}"
