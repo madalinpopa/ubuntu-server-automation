@@ -1,0 +1,93 @@
+---
+# Checks the server from the outside, the way an attacker on the internet
+# would see it. Every task runs on your computer (the controller), not on
+# the server. Nothing is changed.
+#
+# Run: ansible-playbook playbooks/verify_external.yml
+#
+# The checks use the "ssh" command and plain TCP connections to
+# verify_external_address (default: ansible_host). Run them from a network
+# that is outside the server, not from the server itself.
+
+- name: Verify the server from outside
+  hosts: all
+  gather_facts: false
+  become: false
+
+  vars:
+    verify_external_address: "{{ ansible_host }}"
+    # Extra options for the ssh command, for example ["-i", "~/.ssh/id_ed25519"].
+    verify_external_ssh_args: []
+    # Ports that must accept connections from outside.
+    verify_external_open_tcp_ports: >-
+      {{ [ssh_port | int]
+         + (firewall_allowed_tcp_ports | map('int') | list)
+         + ([80] if caddy_enabled | bool else [])
+         + ([443] if caddy_enabled | bool and caddy_site_address is not match(':') else []) }}
+    # Ports that must not be reachable from outside. These are common ports
+    # for databases, admin interfaces, the Docker API and Caddy's admin API.
+    verify_external_closed_tcp_ports: [2019, 2375, 2376, 3000, 5432, 8000, 8080, 8081, 9000]
+
+  tasks:
+    - name: Check that expected ports are reachable
+      ansible.builtin.wait_for:
+        host: "{{ verify_external_address }}"
+        port: "{{ item }}"
+        state: started
+        timeout: 10
+        msg: "Port {{ item }} on {{ verify_external_address }} is not reachable. Check UFW and the service."
+      delegate_to: localhost
+      loop: "{{ verify_external_open_tcp_ports }}"
+
+    - name: Check that other ports are not reachable
+      ansible.builtin.wait_for:
+        host: "{{ verify_external_address }}"
+        port: "{{ item }}"
+        state: stopped
+        connect_timeout: 3
+        timeout: 5
+        msg: >-
+          Port {{ item }} on {{ verify_external_address }} accepts connections from outside.
+          If a Docker container publishes it, bind it to 127.0.0.1 instead.
+      delegate_to: localhost
+      loop: "{{ verify_external_closed_tcp_ports | difference(verify_external_open_tcp_ports) }}"
+
+    - name: Log in as the admin user with an SSH key
+      ansible.builtin.command:
+        argv: >-
+          {{ ['ssh', '-p', ssh_port | string,
+              '-o', 'BatchMode=yes', '-o', 'PreferredAuthentications=publickey']
+             + verify_external_ssh_args
+             + [admin_user ~ '@' ~ verify_external_address, 'id -un'] }}
+      delegate_to: localhost
+      changed_when: false
+      register: verify_external_key_login
+
+    - name: Check that the key login reached the admin user
+      ansible.builtin.assert:
+        that: verify_external_key_login.stdout == admin_user
+        fail_msg: "SSH key login returned '{{ verify_external_key_login.stdout }}', expected '{{ admin_user }}'."
+        quiet: true
+
+    - name: Try to log in without a key
+      ansible.builtin.command:
+        argv: >-
+          {{ ['ssh', '-p', ssh_port | string,
+              '-o', 'BatchMode=yes', '-o', 'PubkeyAuthentication=no',
+              '-o', 'PreferredAuthentications=password,keyboard-interactive']
+             + verify_external_ssh_args
+             + [admin_user ~ '@' ~ verify_external_address, 'true'] }}
+      delegate_to: localhost
+      changed_when: false
+      failed_when: false
+      register: verify_external_password_login
+
+    - name: Check that the server only offers SSH key login
+      ansible.builtin.assert:
+        that:
+          - verify_external_password_login.rc != 0
+          - "'Permission denied (publickey)' in verify_external_password_login.stderr"
+        fail_msg: >-
+          The server should refuse logins without a key and list only "publickey".
+          ssh said: {{ verify_external_password_login.stderr }}
+        quiet: true
