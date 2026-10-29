@@ -59,7 +59,7 @@ After the first run, root can no longer log in over SSH. Set `ansible_user` in `
 ansible-playbook playbooks/site.yml --ask-vault-pass -K
 ```
 
-If the first run connects as root, it stops with an `UNREACHABLE` error at the task "Check that a new SSH login works". The tutorial explains why and what to do: [first run as root](docs/tutorial-first-vps.md#if-the-first-run-stops-at-check-that-a-new-ssh-login-works).
+A first run as root finishes in one go, even though it turns off root login on the way. The tutorial explains why: [first run as root](docs/tutorial-first-vps.md#if-the-first-run-connects-as-root).
 
 ## Check the result
 
@@ -84,7 +84,7 @@ Both must end with `failed=0`. Each failed check prints what is wrong. See [what
 
 ## Testing
 
-`tests/run.sh` creates throwaway Ubuntu 24.04 and 26.04 virtual machines with [Lima](https://lima-vm.io/), runs the full setup with every service turned on, runs it again to prove nothing changes, runs both check playbooks, and deletes the VMs.
+`tests/run.sh` creates throwaway Ubuntu 24.04 and 26.04 virtual machines with [Lima](https://lima-vm.io/), runs the full setup as root with every service turned on, runs it again as a normal user to prove nothing changes, runs both check playbooks, and deletes the VMs.
 
 ```bash
 tests/run.sh

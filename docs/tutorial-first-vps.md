@@ -269,7 +269,7 @@ ansible-playbook playbooks/site.yml --ask-vault-pass
 2. Installs a small set of packages and sets the time zone.
 3. Keeps unattended security upgrades turned on.
 4. Creates the admin user with your keys and password, then opens a **new** SSH connection as that user to prove the key works.
-5. Only then writes `/etc/ssh/sshd_config.d/00-hardening.conf`, which turns off password and root login, checks the configuration with `sshd -t`, reloads SSH and confirms the new settings with `sshd -T`.
+5. Only then writes `/etc/ssh/sshd_config.d/00-hardening.conf`, which turns off password and root login, checks the configuration with `sshd -t`, reloads SSH and confirms the new settings with `sshd -T`. Then it logs in once more as the admin user over a new connection, to prove new logins still work.
 6. Allows SSH in UFW and only then enables the firewall.
 7. Configures fail2ban.
 
@@ -282,18 +282,13 @@ vps1    : ok=<n>  changed=<n>  unreachable=0  failed=0  skipped=<n> ...
 
 The `ok`, `changed` and `skipped` counts depend on your settings. What matters is `unreachable=0` and `failed=0`.
 
-### If the first run stops at "Check that a new SSH login works"
+### If the first run connects as root
 
-If `ansible_user` is `root`, the run ends like this:
+This works in one run. The hardening step turns off root login, but a reload of the SSH server keeps open sessions alive, and Ansible keeps its connection open for the whole run. So the firewall, fail2ban and the optional parts still run over that connection. After the SSH change the playbook logs in again as the admin user, over a new connection with key login only, to prove new logins work. It does not try a new root login, because that is now meant to fail.
 
-```
-TASK [Check that a new SSH login works] ****************************
-fatal: [vps1]: UNREACHABLE! => ... root@203.0.113.10: Permission denied (publickey).
-```
+From now on root cannot log in over SSH, so every later run must use the admin user (step 7).
 
-This is a known problem. The task logs in again as `ansible_user` to prove that new logins still work, but the hardening step has just turned off root login, so root cannot log in any more. The admin user was already tested before the SSH change, so you are not locked out. The firewall and fail2ban tasks did not run yet. Continue with step 7: the next run, as the admin user, finishes them.
-
-If your provider gave you a user such as `ubuntu`, this does not happen.
+If the connection drops later in that first run, for example because of a network problem, Ansible cannot log in as root again and reports `UNREACHABLE`. You are not locked out, because the admin login was already proven. Continue with step 7 and run the playbook again as the admin user.
 
 ## Step 7: Switch to the admin user
 
@@ -324,7 +319,7 @@ From now on you work as the admin user, not as root.
    ansible-playbook playbooks/site.yml --ask-vault-pass -K
    ```
 
-   If the first run finished without errors, this run should end with `changed=0`, because everything is already in place. If the first run stopped early, this run finishes the remaining tasks. Run it once more and you should see `changed=0`.
+   If the first run finished without errors, this run should end with `changed=0`, because everything is already in place. If the first run stopped early, for example because the network dropped, this run finishes the remaining tasks. Run it once more and you should see `changed=0`.
 
 ## Step 8: Verify the server
 

@@ -3,9 +3,11 @@
 #
 # For each Ubuntu release it:
 #   1. creates a fresh VM
-#   2. runs playbooks/site.yml (base + Docker + Caddy + all optional
+#   2. turns on SSH key login for root, like on a fresh VPS, and runs
+#      playbooks/site.yml as root (base + Docker + Caddy + all optional
 #      services, with fake .test domains and Caddy's local certificates)
-#   3. runs it again and fails if anything changed (idempotency)
+#   3. checks that root can no longer log in, then runs site.yml again as
+#      Lima's normal user and fails if anything changed (idempotency)
 #   4. starts a test container published with "-p 8080:8080"
 #   5. runs playbooks/verify.yml on the VM (includes the service containers
 #      and the Caddy sites)
@@ -15,6 +17,7 @@
 #   7. deletes the VM (set KEEP_VMS=1 to keep it)
 #
 # Usage:   tests/run.sh [24.04] [26.04]      (default: both)
+#          FIRST_RUN_AS_ROOT=0 tests/run.sh   first run as Lima's user instead
 # Needs:   limactl, ansible-playbook (see requirements.txt), collections
 #          from requirements.yml. On macOS the terminal app may need the
 #          "Local Network" permission to reach 192.168.64.x.
@@ -95,9 +98,35 @@ for i in "${!VMS[@]}"; do
     "template:ubuntu-${VERSIONS[$i]}" >"$LOG_DIR/limactl-$vm.log" 2>&1
 done
 
-# 2. First run.
-run_playbook site-run1 playbooks/site.yml
+# Try a new SSH login (no shared connection) and run "true".
+vm_ssh() {
+  local vm=$1; shift
+  ssh -F "$HOME/.lima/$vm/ssh.config" -o ControlPath=none -o BatchMode=yes "$@" "lima-$vm" true
+}
+
+# 2. First run. By default it connects as root, like on a fresh VPS.
+#    Lima's images do not allow root login, so copy Lima's key to root.
+FIRST_RUN_ARGS=()
+if [ "${FIRST_RUN_AS_ROOT:-1}" = "1" ]; then
+  for vm in "${VMS[@]}"; do
+    echo "== Allowing SSH key login as root on $vm"
+    ssh -F "$HOME/.lima/$vm/ssh.config" "lima-$vm" \
+      "sudo install -d -m 0700 /root/.ssh && sudo install -m 0600 ~/.ssh/authorized_keys /root/.ssh/authorized_keys"
+    vm_ssh "$vm" -l root || { echo "FAIL: root cannot log in to $vm before the test"; exit 1; }
+  done
+  FIRST_RUN_ARGS=(-u root)
+fi
+run_playbook site-run1 ${FIRST_RUN_ARGS[@]+"${FIRST_RUN_ARGS[@]}"} playbooks/site.yml
 check_recap "$LOG_DIR/site-run1.log" any
+
+if [ "${FIRST_RUN_AS_ROOT:-1}" = "1" ]; then
+  for vm in "${VMS[@]}"; do
+    if vm_ssh "$vm" -l root 2>/dev/null; then
+      echo "FAIL: root can still log in to $vm"; exit 1
+    fi
+  done
+  echo "OK: first run as root finished and root login is now refused"
+fi
 
 # 3. Second run must change nothing.
 run_playbook site-run2 playbooks/site.yml

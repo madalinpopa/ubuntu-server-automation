@@ -51,7 +51,7 @@ Every command runs from the repository folder. Add `--ask-vault-pass` once the v
 | Packages | `tasks/apt.yml` | Installs `ca-certificates`, `curl`, `python3-debian`, `ufw`, `unattended-upgrades`, `bash-completion`, `vim`, `git` and `extra_packages`, sets the time zone. No full upgrade |
 | Updates | `tasks/updates.yml` | Writes `/etc/apt/apt.conf.d/20auto-upgrades`, enables `apt-daily.timer` and `apt-daily-upgrade.timer` |
 | Admin user | `tasks/users.yml` | Creates `admin_user` in group `sudo`, sets its password and `authorized_keys`, manages `/etc/sudoers.d/90-admin-nopasswd`, then logs in as that user with a key to prove it works |
-| SSH | `tasks/ssh.yml` | Checks something listens on `ssh_port`, writes `/etc/ssh/sshd_config.d/00-hardening.conf`, runs `sshd -t`, reloads `ssh.service`, checks `sshd -T`, reconnects |
+| SSH | `tasks/ssh.yml` | Checks something listens on `ssh_port`, writes `/etc/ssh/sshd_config.d/00-hardening.conf`, runs `sshd -t`, reloads `ssh.service`, checks `sshd -T`, logs in again as `admin_user` over a new connection |
 | Firewall | `tasks/firewall.yml` | Sets `IPV6=yes`, allows `ssh_port/tcp` and `firewall_allowed_tcp_ports`, default deny incoming and allow outgoing, enables UFW |
 | fail2ban | `tasks/fail2ban.yml` | Installs fail2ban, writes `/etc/fail2ban/jail.d/sshd.local`. Only when `fail2ban_enabled` |
 

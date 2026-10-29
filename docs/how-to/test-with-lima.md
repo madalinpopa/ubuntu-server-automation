@@ -9,8 +9,8 @@ The test script `tests/run.sh` checks the playbooks on real Ubuntu virtual machi
 For each Ubuntu release (24.04 and 26.04 by default) it:
 
 1. creates a fresh VM,
-2. runs `playbooks/site.yml` with Docker, Caddy and all seven services turned on, using fake `.test` domains and Caddy's local certificates,
-3. runs it again and fails if anything changed (the idempotency check),
+2. allows SSH key login as root, like on a fresh VPS, and runs `playbooks/site.yml` as root with Docker, Caddy and all seven services turned on, using fake `.test` domains and Caddy's local certificates,
+3. checks that root can no longer log in, then runs `site.yml` again as Lima's normal user and fails if anything changed (the idempotency check),
 4. starts a test container published with `-p 8080:8080`, to prove Docker keeps it on 127.0.0.1,
 5. runs `playbooks/verify.yml` on the VM,
 6. runs `playbooks/verify_external.yml` from your computer against the VM's own network address,
@@ -54,11 +54,18 @@ The VMs are called `ust-noble` (24.04) and `ust-resolute` (26.04). Delete them w
 limactl delete -f ust-noble ust-resolute
 ```
 
+For a first run as Lima's normal user (with passwordless sudo) instead of root:
+
+```bash
+FIRST_RUN_AS_ROOT=0 tests/run.sh
+```
+
 ## Expected result
 
 A full run took about 6 minutes once the Ubuntu images were cached. The output ends with:
 
 ```
+OK: first run as root finished and root login is now refused
 OK: second run changed nothing
 OK: verify.yml passed
 OK: verify_external.yml passed
@@ -103,11 +110,10 @@ For `playbooks/verify_external.yml`, pass the key to its `ssh` command too: `-e 
 
 ## What the tests cover, and what they do not
 
-Covered on Ubuntu 24.04 and 26.04 (arm64): the base setup, Docker, Caddy, all seven services, a second run with `changed=0`, all checks in `verify.yml` and `verify_external.yml`, and `become` with a sudo password on 24.04 and on 26.04 with `sudo.ws`.
+Covered on Ubuntu 24.04 and 26.04 (arm64): a first run as root that finishes in one go and leaves root login turned off, the base setup, Docker, Caddy, all seven services, a second run with `changed=0`, all checks in `verify.yml` and `verify_external.yml`, and `become` with a sudo password on 24.04 and on 26.04 with `sudo.ws`.
 
 Not covered yet:
 
-- A first run that connects as `root`, as on many real VPSes. Lima logs in as a normal user with passwordless sudo.
 - amd64 (x86_64) servers. Only arm64 VMs were tested.
 - Real domains with Let's Encrypt certificates. The tests use Caddy's local certificate authority.
 - Reboots.

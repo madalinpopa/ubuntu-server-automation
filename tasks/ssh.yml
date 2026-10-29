@@ -50,10 +50,19 @@
       /etc/ssh/sshd_config.d/ that sorts before 00-hardening.conf may override them.
     quiet: true
 
-# Close the shared SSH connection so the next task logs in again.
-# That proves new logins still work with the new settings.
-- name: Reconnect to the server
-  ansible.builtin.meta: reset_connection
-
-- name: Check that a new SSH login works
-  ansible.builtin.ping:
+# Prove that a new SSH login still works with the new settings. The check
+# logs in as the admin user over a new connection (ControlPath=none turns
+# off SSH connection sharing, so an open session cannot hide a failure).
+#
+# The rest of the run keeps using the connection Ansible already has open.
+# Existing SSH sessions survive the reload, so a first run that connects as
+# root can finish even though root login is now turned off. Later runs must
+# connect as admin_user.
+- name: Check that the admin user can still log in with an SSH key
+  ansible.builtin.command: id -un
+  become: false
+  vars:
+    ansible_user: "{{ admin_user }}"
+    ansible_ssh_args: "-o ControlMaster=no -o ControlPath=none"
+    ansible_ssh_extra_args: "-o PreferredAuthentications=publickey"
+  changed_when: false

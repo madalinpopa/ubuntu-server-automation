@@ -37,13 +37,16 @@
   when: not admin_sudo_nopasswd | bool
 
 # Lockout check: open a new SSH connection as the admin user, with the same
-# key settings Ansible uses. If this fails, the play stops before root login
-# and password login are disabled.
+# key settings Ansible uses. ControlPath=none turns off SSH connection
+# sharing, so the check cannot reuse a session that is already open.
+# If this fails, the play stops before root login and password login are
+# disabled.
 - name: Check that the admin user can log in with an SSH key
   ansible.builtin.command: id -nG
   become: false
   vars:
     ansible_user: "{{ admin_user }}"
+    ansible_ssh_args: "-o ControlMaster=no -o ControlPath=none"
     # Only a key counts. A password must not make this check pass.
     ansible_ssh_extra_args: "-o PreferredAuthentications=publickey"
   changed_when: false

@@ -48,7 +48,7 @@ The order of the base playbook is deliberate:
 1. Create the admin user and its `authorized_keys`.
 2. Open a **new** SSH connection as the admin user, with key login only. If that fails, stop before anything else changes.
 3. Only then turn off password and root login. Validate the config before reloading.
-4. Reconnect to prove new logins still work.
+4. Open another new SSH connection as the admin user to prove new logins still work. The rest of the run keeps using the connection that is already open, so a first run as root can finish after root login is turned off.
 5. Allow the SSH port in UFW, and only then enable UFW.
 
 A reload of the SSH server keeps existing sessions open, so a session you keep open in another terminal stays a way back in.
