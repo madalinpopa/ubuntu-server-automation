@@ -1,0 +1,13 @@
+---
+# Everything in one run: base setup, then the optional parts that are
+# turned on in your variables (docker_enabled, caddy_enabled).
+# Run: ansible-playbook playbooks/site.yml
+
+- name: Base server setup
+  ansible.builtin.import_playbook: base.yml
+
+- name: Docker Engine
+  ansible.builtin.import_playbook: docker.yml
+
+- name: Caddy web server
+  ansible.builtin.import_playbook: caddy.yml
