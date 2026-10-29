@@ -94,7 +94,7 @@ All containers use the restart policy `unless-stopped` and a health check.
 | Time | Network time sync is on (`timedatectl show -p NTP`) |
 | Services | Enabled at boot and active: `ssh.socket`, `ufw.service`, `unattended-upgrades.service`, `apt-daily.timer`, `apt-daily-upgrade.timer`, plus `fail2ban.service`, `containerd.service`, `docker.service`, `caddy.service` when turned on |
 | Updates | `apt-config` shows `Update-Package-Lists "1"` and `Unattended-Upgrade "1"`, and automatic reboot is not `true` |
-| Admin user | In the `sudo` group; has a password hash (unless `admin_sudo_nopasswd`); `~/.ssh` and `authorized_keys` exist, belong to the user, mode 0700 or 0600 |
+| Admin user | In the `sudo` group; has a password hash (unless `admin_sudo_nopasswd`); `~/.ssh` (mode 0700) and `authorized_keys` (mode 0600) exist and belong to the user |
 | SSH login | A new SSH connection as `admin_user` with a key works |
 | SSH config | `00-hardening.conf` exists, root-owned, mode 0644. `sshd -T` shows `port <ssh_port>`, `permitrootlogin no`, `passwordauthentication no`, `kbdinteractiveauthentication no`, `pubkeyauthentication yes`, `x11forwarding no` |
 | Firewall | UFW active, `deny (incoming)`, `allow (outgoing)`, and an IPv4 and IPv6 allow rule for each expected port (SSH, `firewall_allowed_tcp_ports`, 80 and 443 with Caddy) |

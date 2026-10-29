@@ -127,25 +127,28 @@
 
     - name: Read the admin user's SSH files
       ansible.builtin.stat:
-        path: "{{ item }}"
+        path: "{{ item.path }}"
       register: verify_admin_ssh_files
       loop:
-        - "~{{ admin_user }}/.ssh"
-        - "~{{ admin_user }}/.ssh/authorized_keys"
+        - { path: "~{{ admin_user }}/.ssh", mode: "0700" }
+        - { path: "~{{ admin_user }}/.ssh/authorized_keys", mode: "0600" }
+      loop_control:
+        label: "{{ item.path }}"
 
     - name: Check owner and permissions of the admin user's SSH files
       ansible.builtin.assert:
         that:
           - item.stat.exists
           - item.stat.pw_name == admin_user
-          - item.stat.mode in ['0700', '0600']
+          - item.stat.mode == item.item.mode
         fail_msg: >-
-          {{ item.item }} must exist, belong to {{ admin_user }} and not be readable
-          by others (mode 0700 for .ssh, 0600 for authorized_keys).
+          {{ item.item.path }} must exist, belong to {{ admin_user }} and have mode
+          {{ item.item.mode }}. It has owner {{ item.stat.pw_name | default('none') }}
+          and mode {{ item.stat.mode | default('none') }}.
         quiet: true
       loop: "{{ verify_admin_ssh_files.results }}"
       loop_control:
-        label: "{{ item.item }}"
+        label: "{{ item.item.path }}"
 
     - name: Check that the admin user can log in with an SSH key
       ansible.builtin.command: id -un
