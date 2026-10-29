@@ -1,0 +1,36 @@
+---
+# Creates a PostgreSQL user and a database it owns, for one app.
+# Imported by the app task files with these variables:
+#   app_db_name, app_db_user, app_db_password
+# The app owns its database, so it can create its tables (PostgreSQL 15 and
+# later no longer let every user create tables in the public schema).
+
+- name: Check the database password for {{ app_db_user }}
+  ansible.builtin.assert:
+    that:
+      - app_db_password | length >= 16
+      - "'replace-me' not in app_db_password"
+    fail_msg: The database password for {{ app_db_user }} is missing, too short or still the example value.
+    quiet: true
+  no_log: true
+
+- name: Create the database user {{ app_db_user }}
+  community.postgresql.postgresql_user:
+    name: "{{ app_db_user }}"
+    password: "{{ app_db_password }}"
+    login_host: "{{ postgresql_host }}"
+    login_user: postgres
+    login_password: "{{ postgresql_password }}"
+    login_db: postgres
+  no_log: true
+
+- name: Create the database {{ app_db_name }}
+  community.postgresql.postgresql_db:
+    name: "{{ app_db_name }}"
+    owner: "{{ app_db_user }}"
+    encoding: UTF-8
+    template: template0
+    login_host: "{{ postgresql_host }}"
+    login_user: postgres
+    login_password: "{{ postgresql_password }}"
+  no_log: true

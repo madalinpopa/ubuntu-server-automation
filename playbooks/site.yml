@@ -1,6 +1,7 @@
 ---
 # Everything in one run: base setup, then the optional parts that are
-# turned on in your variables (docker_enabled, caddy_enabled).
+# turned on in your variables (docker_enabled, caddy_enabled and the
+# <service>_enabled settings in inventory/group_vars/all/services.yml).
 # Run: ansible-playbook playbooks/site.yml
 
 - name: Base server setup
@@ -11,3 +12,6 @@
 
 - name: Caddy web server
   ansible.builtin.import_playbook: caddy.yml
+
+- name: Optional services
+  ansible.builtin.import_playbook: services.yml

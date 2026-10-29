@@ -61,14 +61,7 @@
     mode: "0644"
 
 - name: Write the Caddyfile
-  ansible.builtin.template:
-    src: Caddyfile.j2
-    dest: /etc/caddy/Caddyfile
-    owner: root
-    group: root
-    mode: "0644"
-    validate: caddy validate --adapter caddyfile --config %s
-  notify: Reload caddy
+  ansible.builtin.import_tasks: caddyfile.yml
 
 - name: Start Caddy and enable it at boot
   ansible.builtin.systemd_service:

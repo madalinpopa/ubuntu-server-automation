@@ -1,0 +1,124 @@
+---
+# Optional services, installed by playbooks/services.yml (and site.yml).
+# Every service is off by default. Turn one on with <name>_enabled: true.
+#
+# All services run in Docker, so they need docker_enabled: true.
+# Their ports are published on 127.0.0.1 only. To reach a web app from the
+# internet, set caddy_enabled: true and the app's <name>_domain. Caddy then
+# proxies https://<domain> to the app and gets a certificate for it.
+# Without a domain, use an SSH tunnel, for example:
+#   ssh -L 3000:127.0.0.1:3000 sysadmin@your-server   then open http://localhost:3000
+#
+# Image tags are pinned. To upgrade, read the app's release notes, change the
+# tag here and run the playbook again. Containers keep their data in named
+# Docker volumes (see "docker volume ls").
+#
+# Secrets (passwords, keys) come from the vault file. See
+# inventory/vault.example.yml for the names.
+
+# --- PostgreSQL --------------------------------------------------------------
+# Database server for Gitea, Umami and Semaphore. It is attached only to an
+# internal Docker network, so it has no published port and no internet access.
+# Connect with: sudo docker exec -it postgres psql -U postgres
+postgresql_enabled: false
+postgresql_image: postgres:18.6
+# Superuser password, used by Ansible to create the app databases.
+postgresql_password: "{{ vault_postgresql_password | default('') }}"
+# Name of the internal Docker network that apps use to reach PostgreSQL.
+postgresql_network: postgres
+
+# --- pgAdmin -----------------------------------------------------------------
+# Web admin tool for PostgreSQL. Anyone who can log in to pgAdmin can read and
+# change every database, so keep it private: by default it is only reachable
+# through an SSH tunnel:
+#   ssh -L 5050:127.0.0.1:5050 sysadmin@your-server   then open http://localhost:5050
+# Setting pgadmin_domain puts it on the internet behind Caddy. Only do that
+# with a strong password, and turn it off again when you are done.
+pgadmin_enabled: false
+pgadmin_image: dpage/pgadmin4:9.18
+pgadmin_port: 5050
+pgadmin_domain: ""
+# Login email for pgAdmin. It must look like a real address (example.com works).
+pgadmin_email: admin@example.com
+pgadmin_password: "{{ vault_pgadmin_password | default('') }}"
+
+# --- Gitea -------------------------------------------------------------------
+# Git hosting. Registration is closed; the playbook creates the admin account.
+# Git over SSH is turned off: clone and push over HTTPS.
+gitea_enabled: false
+gitea_image: docker.gitea.com/gitea:28.2.0
+gitea_port: 3000
+gitea_domain: ""
+# "admin" is a reserved name in Gitea, so pick another one.
+gitea_admin_user: gitadmin
+gitea_admin_email: gitadmin@example.com
+gitea_admin_password: "{{ vault_gitea_admin_password | default('') }}"
+# Encrypts secrets Gitea stores, such as 2FA keys. Set it once and keep it.
+gitea_secret_key: "{{ vault_gitea_secret_key | default('') }}"
+gitea_db_name: gitea
+gitea_db_user: gitea
+gitea_db_password: "{{ vault_gitea_db_password | default('') }}"
+
+# --- Umami -------------------------------------------------------------------
+# Privacy-friendly web analytics. Umami starts with the login admin / umami.
+# The playbook changes that password to umami_admin_password right away.
+umami_enabled: false
+umami_image: ghcr.io/umami-software/umami:3.4.1
+umami_port: 3001
+umami_domain: ""
+umami_admin_password: "{{ vault_umami_admin_password | default('') }}"
+# Random string used to sign login tokens.
+umami_app_secret: "{{ vault_umami_app_secret | default('') }}"
+umami_db_name: umami
+umami_db_user: umami
+umami_db_password: "{{ vault_umami_db_password | default('') }}"
+
+# --- Semaphore UI ------------------------------------------------------------
+# Web UI for running Ansible playbooks. It stores SSH keys and passwords for
+# your servers, so treat its admin account like root access.
+semaphore_enabled: false
+semaphore_image: semaphoreui/semaphore:v2.19.17
+semaphore_port: 3002
+semaphore_domain: ""
+semaphore_admin_user: admin
+semaphore_admin_name: Semaphore Admin
+semaphore_admin_email: admin@example.com
+semaphore_admin_password: "{{ vault_semaphore_admin_password | default('') }}"
+# Key that encrypts the secrets Semaphore stores. Keep a copy: without it
+# the stored keys cannot be read after a restore.
+semaphore_access_key_encryption: "{{ vault_semaphore_access_key_encryption | default('') }}"
+semaphore_db_name: semaphore
+semaphore_db_user: semaphore
+semaphore_db_password: "{{ vault_semaphore_db_password | default('') }}"
+
+# --- Memos -------------------------------------------------------------------
+# Note-taking app. The first account becomes the admin, so the playbook
+# creates it before the app is published. Afterwards, turn off sign-ups in
+# Settings > System if you do not want other people to register.
+memos_enabled: false
+memos_image: neosmemo/memos:0.31.0
+memos_port: 5230
+memos_domain: ""
+memos_admin_user: memosadmin
+memos_admin_password: "{{ vault_memos_admin_password | default('') }}"
+
+# --- ntfy --------------------------------------------------------------------
+# Push notifications. Anonymous access is denied; the playbook creates an
+# admin user. Add more users with: sudo docker exec -it ntfy ntfy user add NAME
+ntfy_enabled: false
+ntfy_image: binwiederhier/ntfy:v2.34.0
+ntfy_port: 2586
+ntfy_domain: ""
+ntfy_admin_user: ntfyadmin
+ntfy_admin_password: "{{ vault_ntfy_admin_password | default('') }}"
+
+# --- Caddy sites for the services --------------------------------------------
+# Built from the settings above: one entry per enabled service with a domain.
+# templates/Caddyfile.j2 adds a reverse_proxy site for each. Do not edit.
+caddy_service_sites: >-
+  {{ ([{'domain': pgadmin_domain, 'port': pgadmin_port}] if pgadmin_enabled | bool and pgadmin_domain | length > 0 else [])
+     + ([{'domain': gitea_domain, 'port': gitea_port}] if gitea_enabled | bool and gitea_domain | length > 0 else [])
+     + ([{'domain': umami_domain, 'port': umami_port}] if umami_enabled | bool and umami_domain | length > 0 else [])
+     + ([{'domain': semaphore_domain, 'port': semaphore_port}] if semaphore_enabled | bool and semaphore_domain | length > 0 else [])
+     + ([{'domain': memos_domain, 'port': memos_port}] if memos_enabled | bool and memos_domain | length > 0 else [])
+     + ([{'domain': ntfy_domain, 'port': ntfy_port}] if ntfy_enabled | bool and ntfy_domain | length > 0 else []) }}

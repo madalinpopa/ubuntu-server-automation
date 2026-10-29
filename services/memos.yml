@@ -1,20 +1,62 @@
 ---
-- name: Create memos data volume 
-  community.docker.docker_volume:
-    name: "{{ memos['data_volume'] }}"
+# Memos, a note-taking app. Data lives in SQLite inside the memos_data volume.
+#
+# The first account created on a new Memos instance becomes its admin.
+# The tasks below create that account through the API while the app is only
+# reachable on 127.0.0.1, so nobody else can claim it.
 
-- name: Create application memos container
+- name: Check the Memos admin password
+  ansible.builtin.assert:
+    that:
+      - memos_admin_password | length >= 12
+      - "'replace-me' not in memos_admin_password"
+    fail_msg: Set vault_memos_admin_password in the vault file (at least 12 characters).
+    quiet: true
+  no_log: true
+
+- name: Create the Memos network
+  community.docker.docker_network:
+    name: memos
+
+- name: Create the Memos data volume
+  community.docker.docker_volume:
+    name: memos_data
+
+- name: Run the Memos container
   community.docker.docker_container:
-    name: "{{ memos['container_name'] }}"
-    image: "{{ memos['container_image'] }}"
-    hostname: "{{ memos['container_hostname'] }}"
-    pull: true
+    name: memos
+    image: "{{ memos_image }}"
+    state: healthy
     restart_policy: unless-stopped
-    recreate: true
-    image_name_mismatch: recreate
     networks:
-      - name: "{{ memos['network'] }}"
-    ports:
-      - "5230:5230"
+      - name: memos
+    published_ports:
+      - "127.0.0.1:{{ memos_port }}:5230"
     volumes:
-      - "{{ memos['data_volume'] }}:/var/opt/memos"
+      - memos_data:/var/opt/memos
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:5230/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+      start_interval: 2s
+
+- name: Read the Memos instance profile
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ memos_port }}/api/v1/instance/profile"
+    return_content: true
+  register: memos_profile
+
+- name: Create the Memos admin account
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ memos_port }}/api/v1/users"
+    method: POST
+    body_format: json
+    body:
+      username: "{{ memos_admin_user }}"
+      password: "{{ memos_admin_password }}"
+    status_code: 200
+  changed_when: true
+  when: memos_profile.json.needsSetup | default(false) | bool
+  no_log: true

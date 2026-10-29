@@ -8,3 +8,9 @@ collections:
   # ansible.posix.authorized_key
   - name: ansible.posix
     version: ">=2.2.2,<3.0.0"
+  # Containers, networks and volumes for the optional services
+  - name: community.docker
+    version: ">=5.4.0,<6.0.0"
+  # Databases and users in PostgreSQL for the optional services
+  - name: community.postgresql
+    version: ">=5.1.0,<6.0.0"

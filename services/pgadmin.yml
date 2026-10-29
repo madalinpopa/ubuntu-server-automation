@@ -1,21 +1,60 @@
 ---
-- name: Create pgadmin volume
-  community.docker.docker_volume:
-    name: "{{ pgadmin['data_volume'] }}"
+# pgAdmin, a web interface for PostgreSQL.
+#
+# Published on 127.0.0.1:pgadmin_port only. Reach it through an SSH tunnel:
+#   ssh -L 5050:127.0.0.1:5050 sysadmin@your-server
+# then open http://localhost:5050 and add a server with host "postgres",
+# user "postgres" and the PostgreSQL password.
+# It is on the internet only when pgadmin_domain is set (behind Caddy).
 
-- name: Create pgadmin container
+- name: Check the pgAdmin password
+  ansible.builtin.assert:
+    that:
+      - pgadmin_password | length >= 12
+      - "'replace-me' not in pgadmin_password"
+    fail_msg: Set vault_pgadmin_password in the vault file (at least 12 characters).
+    quiet: true
+  no_log: true
+
+- name: Warn that pgAdmin is on the internet
+  ansible.builtin.debug:
+    msg: >-
+      WARNING: pgadmin_domain is set, so pgAdmin is reachable from the internet at
+      https://{{ pgadmin_domain }}. Anyone who logs in controls every database.
+      Prefer an SSH tunnel (leave pgadmin_domain empty).
+  when: pgadmin_domain | length > 0
+
+- name: Create the pgAdmin network
+  community.docker.docker_network:
+    name: pgadmin
+
+- name: Create the pgAdmin data volume
+  community.docker.docker_volume:
+    name: pgadmin_data
+
+- name: Run the pgAdmin container
+  # The email and password are used only when the data volume is new.
+  # Change the password later in pgAdmin itself.
   community.docker.docker_container:
-    name: "{{ pgadmin['container_name'] }}"
-    image: "{{ pgadmin['container_image'] }}"
-    hostname: "{{ pgadmin['container_hostname'] }}"
+    name: pgadmin
+    image: "{{ pgadmin_image }}"
+    state: healthy
     restart_policy: unless-stopped
-    recreate: true
     env:
       PGADMIN_DEFAULT_EMAIL: "{{ pgadmin_email }}"
       PGADMIN_DEFAULT_PASSWORD: "{{ pgadmin_password }}"
-    ports:
-        - "8081:80"
     networks:
-      - name: "{{ pgadmin['network'] }}"
+      - name: pgadmin
+      - name: "{{ postgresql_network }}"
+    published_ports:
+      - "127.0.0.1:{{ pgadmin_port }}:80"
     volumes:
-      - "{{ pgadmin['data_volume'] }}:/var/lib/pgadmin"
+      - pgadmin_data:/var/lib/pgadmin
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:80/misc/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+      start_interval: 2s
+  no_log: true

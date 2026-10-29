@@ -1,7 +1,23 @@
 # {{ ansible_managed }}
 # Caddy configuration. Docs: https://caddyserver.com/docs/caddyfile
+{% if caddy_local_certs | bool %}
+
+# Test mode: certificates come from Caddy's own local authority instead of
+# Let's Encrypt. Browsers do not trust them.
+{
+	local_certs
+	skip_install_trust
+}
+{% endif %}
 
 {{ caddy_site_address }} {
 	root * /var/www/html
 	file_server
 }
+{% for site in caddy_service_sites %}
+
+# Service on 127.0.0.1:{{ site.port }}
+{{ site.domain }} {
+	reverse_proxy 127.0.0.1:{{ site.port }}
+}
+{% endfor %}

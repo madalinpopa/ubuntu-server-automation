@@ -1,0 +1,74 @@
+---
+# ntfy, a push notification server.
+# Source: https://docs.ntfy.sh/install/#docker and https://docs.ntfy.sh/config/
+#
+# Anonymous users can neither read nor publish (auth-default-access
+# deny-all). The admin user below can do both. Create more users and grant
+# access with "sudo docker exec -it ntfy ntfy user add NAME" and
+# "ntfy access NAME TOPIC rw".
+
+- name: Check the ntfy admin password
+  ansible.builtin.assert:
+    that:
+      - ntfy_admin_password | length >= 12
+      - "'replace-me' not in ntfy_admin_password"
+    fail_msg: Set vault_ntfy_admin_password in the vault file (at least 12 characters).
+    quiet: true
+  no_log: true
+
+- name: Create the ntfy network
+  community.docker.docker_network:
+    name: ntfy
+
+- name: Create the ntfy data volume
+  community.docker.docker_volume:
+    name: ntfy_data
+
+- name: Run the ntfy container
+  community.docker.docker_container:
+    name: ntfy
+    image: "{{ ntfy_image }}"
+    command: serve
+    state: healthy
+    restart_policy: unless-stopped
+    env:
+      NTFY_BASE_URL: "{{ ('https://' ~ ntfy_domain) if ntfy_domain else ('http://localhost:' ~ ntfy_port) }}"
+      NTFY_BEHIND_PROXY: "true"
+      NTFY_CACHE_FILE: /var/lib/ntfy/cache.db
+      NTFY_AUTH_FILE: /var/lib/ntfy/auth.db
+      NTFY_AUTH_DEFAULT_ACCESS: deny-all
+      NTFY_ATTACHMENT_CACHE_DIR: /var/lib/ntfy/attachments
+      NTFY_ENABLE_LOGIN: "true"
+      # Lets iOS devices get notifications through the ntfy.sh relay.
+      NTFY_UPSTREAM_BASE_URL: https://ntfy.sh
+    networks:
+      - name: ntfy
+    published_ports:
+      - "127.0.0.1:{{ ntfy_port }}:80"
+    volumes:
+      - ntfy_data:/var/lib/ntfy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:80/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+      start_interval: 2s
+
+- name: List the ntfy users
+  community.docker.docker_container_exec:
+    container: ntfy
+    argv: [ntfy, user, list]
+  register: ntfy_users
+  changed_when: false
+
+- name: Create the ntfy admin user
+  # Only when it does not exist yet. Change the password later with
+  # "sudo docker exec -it ntfy ntfy user change-pass NAME".
+  community.docker.docker_container_exec:
+    container: ntfy
+    argv: [ntfy, user, add, --role=admin, "{{ ntfy_admin_user }}"]
+    env:
+      NTFY_PASSWORD: "{{ ntfy_admin_password }}"
+  when: ("user " ~ ntfy_admin_user ~ " (") not in (ntfy_users.stdout ~ ntfy_users.stderr)
+  no_log: true

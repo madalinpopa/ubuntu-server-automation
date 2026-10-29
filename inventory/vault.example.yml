@@ -14,3 +14,42 @@
 #   openssl passwd -6
 # (OpenSSL 3 or later, or run it on the server.) Paste the whole $6$... line.
 vault_admin_password_hash: "$6$replace-me$replace-me"
+
+# --- Optional services --------------------------------------------------------
+# Only needed for the services you turn on. Use a different random value for
+# each. Create one with:
+#   openssl rand -hex 24
+# Hex values are safe everywhere (URLs, environment variables).
+
+# PostgreSQL superuser "postgres". Used only when the data volume is new.
+vault_postgresql_password: "replace-me"
+
+# pgAdmin login password (login email: pgadmin_email).
+vault_pgadmin_password: "replace-me"
+
+# Gitea admin account and its database user.
+vault_gitea_admin_password: "replace-me"
+vault_gitea_db_password: "replace-me"
+# Gitea SECRET_KEY. Set it once and never change it. If you already run Gitea,
+# copy SECRET_KEY from /data/gitea/conf/app.ini in the container instead.
+vault_gitea_secret_key: "replace-me"
+
+# Umami admin password (user "admin"), token signing secret and database user.
+vault_umami_admin_password: "replace-me"
+vault_umami_app_secret: "replace-me"
+vault_umami_db_password: "replace-me"
+
+# Semaphore admin account and database user.
+vault_semaphore_admin_password: "replace-me"
+vault_semaphore_db_password: "replace-me"
+# Encrypts the SSH keys and passwords Semaphore stores. Create with:
+#   head -c32 /dev/urandom | base64
+# Keep a copy outside the server. Without it, the keys and passwords stored
+# in a restored database cannot be decrypted.
+vault_semaphore_access_key_encryption: "replace-me"
+
+# Memos admin account.
+vault_memos_admin_password: "replace-me"
+
+# ntfy admin user.
+vault_ntfy_admin_password: "replace-me"

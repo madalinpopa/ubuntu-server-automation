@@ -1,72 +1,75 @@
 ---
-- name: Create application database
-  community.postgresql.postgresql_db:
-    name: "{{ semaphore_db_name }}"
-    encoding: UTF-8
-    template: template0
-    lc_collate: en_US.UTF-8
-    lc_ctype: en_US.UTF-8
-    login_user: "{{ postgres_db_user }}"
-    login_password: "{{ postgres_db_pass }}"
-    login_host: localhost
+# Semaphore UI, a web interface for Ansible.
+# Source: https://docs.semaphoreui.com/administration-guide/installation/docker
+#
+# On first start the container writes /etc/semaphore/config.json and creates
+# the admin user from the SEMAPHORE_ADMIN_* variables. The config volume
+# keeps that file, so later restarts do not run the setup again.
+
+- name: Check the Semaphore secrets
+  ansible.builtin.assert:
+    that:
+      - semaphore_admin_password | length >= 12
+      - "'replace-me' not in semaphore_admin_password"
+      - semaphore_access_key_encryption | length >= 32
+      - "'replace-me' not in semaphore_access_key_encryption"
+    fail_msg: >-
+      Set vault_semaphore_admin_password (at least 12 characters) and
+      vault_semaphore_access_key_encryption (head -c32 /dev/urandom | base64)
+      in the vault file.
+    quiet: true
   no_log: true
 
-- name: Create database users
-  community.postgresql.postgresql_user:
-    name: "{{ semaphore_db_user }}"
-    password: "{{ semaphore_db_pass }}"
-    login_user: "{{ postgres_db_user }}"
-    login_password: "{{ postgres_db_pass }}"
-    login_host: localhost
-  no_log: true
+- name: Create the Semaphore database
+  ansible.builtin.import_tasks: app_database.yml
+  vars:
+    app_db_name: "{{ semaphore_db_name }}"
+    app_db_user: "{{ semaphore_db_user }}"
+    app_db_password: "{{ semaphore_db_password }}"
 
-- name: Update database owner
-  community.postgresql.postgresql_owner:
-    db: "{{ semaphore_db_name }}"
-    new_owner: "{{ semaphore_db_user }}"
-    obj_name: "{{ semaphore_db_name }}"
-    obj_type: database
-    login_user: "{{ postgres_db_user }}"
-    login_password: "{{ postgres_db_pass }}"
-    login_host: localhost
-  no_log: True
+- name: Create the Semaphore network
+  community.docker.docker_network:
+    name: semaphore
 
-- name: Grant database privileges to application user
-  community.postgresql.postgresql_privs:
-    db: "{{ semaphore_db_name }}"
-    privs: ALL
-    type: database
-    role: "{{ semaphore_db_user }}"
-    obj: "{{ semaphore_db_name }}"
-    login_user: "{{ postgres_db_user }}"
-    login_password: "{{ postgres_db_pass }}"
-    login_host: localhost
-  no_log: True
+- name: Create the Semaphore volumes
+  community.docker.docker_volume:
+    name: "{{ item }}"
+  loop:
+    - semaphore_config
+    - semaphore_data
 
-- name: Create semaphore container
+- name: Run the Semaphore container
   community.docker.docker_container:
-    name: "{{ semaphore['container_name'] }}"
-    image: "{{ semaphore['container_image'] }}"
-    hostname: "{{ semaphore['container_hostname'] }}"
+    name: semaphore
+    image: "{{ semaphore_image }}"
+    state: healthy
     restart_policy: unless-stopped
-    image_name_mismatch: recreate
-    recreate: true
     env:
-      SEMAPHORE_DB_USER: "{{ semaphore_db_user }}"
-      SEMAPHORE_DB_PASS: "{{ semaphore_db_pass }}"
-      SEMAPHORE_DB_HOST: postgres  
+      SEMAPHORE_DB_DIALECT: postgres
+      SEMAPHORE_DB_HOST: postgres
       SEMAPHORE_DB_PORT: "5432"
-      SEMAPHORE_DB_DIALECT: postgres 
       SEMAPHORE_DB: "{{ semaphore_db_name }}"
-      SEMAPHORE_PLAYBOOK_PATH: "/tmp/semaphore/"
-      SEMAPHORE_ADMIN_PASSWORD: "{{ semaphore_admin_pass }}"
+      SEMAPHORE_DB_USER: "{{ semaphore_db_user }}"
+      SEMAPHORE_DB_PASS: "{{ semaphore_db_password }}"
+      SEMAPHORE_ADMIN: "{{ semaphore_admin_user }}"
       SEMAPHORE_ADMIN_NAME: "{{ semaphore_admin_name }}"
       SEMAPHORE_ADMIN_EMAIL: "{{ semaphore_admin_email }}"
-      SEMAPHORE_ADMIN: "{{ semaphore_admin_user }}"
+      SEMAPHORE_ADMIN_PASSWORD: "{{ semaphore_admin_password }}"
       SEMAPHORE_ACCESS_KEY_ENCRYPTION: "{{ semaphore_access_key_encryption }}"
-      TZ: Europe/Bucharest
-    ports:
-      - "3002:3000"
+      TZ: "{{ timezone }}"
     networks:
-      - name: "{{ semaphore['network'] }}"
-
+      - name: semaphore
+      - name: "{{ postgresql_network }}"
+    published_ports:
+      - "127.0.0.1:{{ semaphore_port }}:3000"
+    volumes:
+      - semaphore_config:/etc/semaphore
+      - semaphore_data:/var/lib/semaphore
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/api/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+      start_interval: 2s
+  no_log: true

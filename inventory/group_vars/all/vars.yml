@@ -77,3 +77,8 @@ caddy_enabled: false
 # Site address in the Caddyfile. Use your domain (example.com) to get HTTPS
 # automatically. ":80" serves plain HTTP on any address, useful for testing.
 caddy_site_address: ":80"
+
+# Use Caddy's own local certificate authority instead of Let's Encrypt.
+# Only for tests without a public domain: browsers do not trust these
+# certificates. Leave false on a real server.
+caddy_local_certs: false

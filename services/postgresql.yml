@@ -1,44 +1,67 @@
 ---
-- name: Create postgres volume
-  community.docker.docker_volume:
-    name: "{{ postgres['data_volume'] }}"
+# PostgreSQL for the apps that need a database.
+#
+# The container is attached only to an internal Docker network
+# (postgresql_network). Containers on that network can reach it as
+# "postgres:5432". It has no published port, so nothing outside this server
+# can connect, and it cannot open connections to the internet.
+#
+# Ansible creates the app databases from this server (the Docker host), which
+# can reach the container's address on that network. That needs psycopg2.
+#
+# PostgreSQL 18 images keep their data under /var/lib/postgresql/18/docker,
+# so the volume is mounted at /var/lib/postgresql. Older guides mount
+# /var/lib/postgresql/data; the 18 image refuses to start with that.
+# Source: https://hub.docker.com/_/postgres (PGDATA)
+#
+# Major upgrades (18 to 19) need a dump and restore. Changing the tag is
+# not enough. Minor upgrades (18.6 to 18.7) only need a new tag.
 
-- name: Create postgres container
+- name: Check the PostgreSQL password
+  ansible.builtin.assert:
+    that:
+      - postgresql_password | length >= 16
+      - "'replace-me' not in postgresql_password"
+    fail_msg: Set vault_postgresql_password in the vault file (at least 16 characters).
+    quiet: true
+  no_log: true
+
+- name: Install the PostgreSQL client library for Ansible
+  ansible.builtin.apt:
+    name: python3-psycopg2
+    state: present
+
+- name: Create the internal PostgreSQL network
+  community.docker.docker_network:
+    name: "{{ postgresql_network }}"
+    internal: true
+
+- name: Create the PostgreSQL data volume
+  community.docker.docker_volume:
+    name: postgres_data
+
+- name: Run the PostgreSQL container
   community.docker.docker_container:
-    name: "{{ postgres['container_name'] }}"
-    image: "{{ postgres['container_image'] }}"
-    hostname: "{{ postgres['container_hostname'] }}"
+    name: postgres
+    image: "{{ postgresql_image }}"
+    state: healthy
     restart_policy: unless-stopped
-    image_name_mismatch: recreate
-    recreate: true
-    ports:
-      - "5432:5432"
     env:
-      POSTGRES_USER: "{{ postgres_db_user }}"
-      POSTGRES_PASSWORD: "{{ postgres_db_pass }}"
+      POSTGRES_PASSWORD: "{{ postgresql_password }}"
     networks:
-      - name: "{{ postgres['network'] }}"
+      - name: "{{ postgresql_network }}"
     volumes:
-      - "{{ postgres['data_volume'] }}:/var/lib/postgresql/data"
+      - postgres_data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "{{ postgres_db_user }}"]
-      interval: 1m30s
-      timeout: 10s
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "postgres"]
+      interval: 30s
+      timeout: 5s
       retries: 3
       start_period: 30s
+      start_interval: 2s
+  register: postgresql_container
+  no_log: true
 
-- name: Connect postgresql container to public network
-  community.docker.docker_network:
-    name: "{{ docker_networks[0].name }}"
-    connected:
-      - postgres
-    appends: true
-
-- name: Wait for PostgreSQL to become available
-  community.docker.docker_container_exec:
-    container: "{{ postgres['container_name'] }}"
-    command: bash -c "until pg_isready -U {{ postgres_db_user }}; do sleep 1; done"
-  register: result
-  until: result is succeeded
-  retries: 30
-  delay: 1
+- name: Remember the PostgreSQL container address
+  ansible.builtin.set_fact:
+    postgresql_host: "{{ postgresql_container.container.NetworkSettings.Networks[postgresql_network].IPAddress }}"

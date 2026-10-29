@@ -1,62 +1,99 @@
 ---
-- name: Create umami container
+# Umami, web analytics.
+# Source: https://umami.is/docs/install and the upstream docker-compose.yml
+#
+# A new Umami database has the login admin / umami. The last tasks replace
+# that password with umami_admin_password through Umami's API, before the
+# app is reachable from outside this server.
+
+- name: Check the Umami secrets
+  ansible.builtin.assert:
+    that:
+      - umami_admin_password | length >= 12
+      - "'replace-me' not in umami_admin_password"
+      - umami_app_secret | length >= 32
+      - "'replace-me' not in umami_app_secret"
+    fail_msg: >-
+      Set vault_umami_admin_password (at least 12 characters) and
+      vault_umami_app_secret (at least 32 characters) in the vault file.
+    quiet: true
+  no_log: true
+
+- name: Create the Umami database
+  ansible.builtin.import_tasks: app_database.yml
+  vars:
+    app_db_name: "{{ umami_db_name }}"
+    app_db_user: "{{ umami_db_user }}"
+    app_db_password: "{{ umami_db_password }}"
+
+- name: Create the Umami network
+  community.docker.docker_network:
+    name: umami
+
+- name: Run the Umami container
   community.docker.docker_container:
-    name: "{{ umami['container_name'] }}"
-    image: "{{ umami['container_image'] }}"
-    hostname: "{{ umami['container_hostname'] }}"
-    pull: true
+    name: umami
+    image: "{{ umami_image }}"
+    state: healthy
     restart_policy: unless-stopped
-    recreate: true
-    image_name_mismatch: recreate
+    init: true
     env:
+      DATABASE_URL: >-
+        postgresql://{{ umami_db_user }}:{{ umami_db_password | urlencode | replace('/', '%2F') }}@postgres:5432/{{ umami_db_name }}
       APP_SECRET: "{{ umami_app_secret }}"
-      DATABASE_URL: postgresql://{{ umami_database_user }}:{{ umami_database_pass }}@postgres:5432/{{ umami_database_name }}
-      DATABASE_TYPE: postgresql
     networks:
-      - name: "{{ umami['network'] }}"
-    ports:
-      - "3001:3000"
-
-- name: Create application database
-  community.postgresql.postgresql_db:
-    name: "{{ umami_database_name }}"
-    encoding: UTF-8
-    template: template0
-    lc_collate: en_US.UTF-8
-    lc_ctype: en_US.UTF-8
-    login_user: "{{ postgres_db_user }}"
-    login_password: "{{ postgres_db_pass }}"
-    login_host: localhost
+      - name: umami
+      - name: "{{ postgresql_network }}"
+    published_ports:
+      - "127.0.0.1:{{ umami_port }}:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/api/heartbeat"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+      start_interval: 2s
   no_log: true
 
-- name: Create database user
-  community.postgresql.postgresql_user:
-    name: "{{ umami_database_user }}"
-    password: "{{ umami_database_pass }}"
-    login_user: "{{ postgres_db_user }}"
-    login_password: "{{ postgres_db_pass }}"
-    login_host: localhost
+- name: Try to log in to Umami with the new admin password
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ umami_port }}/api/auth/login"
+    method: POST
+    body_format: json
+    body:
+      username: admin
+      password: "{{ umami_admin_password }}"
+    status_code: [200, 401]
+  register: umami_login
   no_log: true
 
-- name: Update database owner
-  community.postgresql.postgresql_owner:
-    db: "{{ umami_database_name }}"
-    new_owner: "{{ umami_database_user }}"
-    obj_name: "{{ umami_database_name }}"
-    obj_type: database
-    login_user: "{{ postgres_db_user }}"
-    login_password: "{{ postgres_db_pass }}"
-    login_host: localhost
-  no_log: True
+- name: Log in to Umami with the default password
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ umami_port }}/api/auth/login"
+    method: POST
+    body_format: json
+    body:
+      username: admin
+      password: umami
+    # 401 means the default password was already changed by hand.
+    status_code: [200, 401]
+  register: umami_default_login
+  when: umami_login.status == 401
+  no_log: true
 
-- name: Grant database privileges to application user
-  community.postgresql.postgresql_privs:
-    db: "{{ umami_database_name }}"
-    privs: ALL
-    type: database
-    role: "{{ umami_database_user }}"
-    obj: "{{ umami_database_name }}"
-    login_user: "{{ postgres_db_user }}"
-    login_password: "{{ postgres_db_pass }}"
-    login_host: localhost
-  no_log: True
+- name: Replace the default Umami admin password
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ umami_port }}/api/me/password"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ umami_default_login.json.token }}"
+    body_format: json
+    body:
+      currentPassword: umami
+      newPassword: "{{ umami_admin_password }}"
+    status_code: 200
+  changed_when: true
+  when:
+    - umami_login.status == 401
+    - umami_default_login.status == 200
+  no_log: true

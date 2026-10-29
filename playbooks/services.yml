@@ -1,0 +1,72 @@
+---
+# Optional services in Docker containers. Each one runs only when its
+# <name>_enabled variable is true (see inventory/group_vars/all/services.yml).
+# Run: ansible-playbook playbooks/services.yml
+#
+# Needs Docker (docker_enabled: true). Run site.yml, or docker.yml and
+# caddy.yml, first.
+
+- name: Optional services
+  hosts: all
+  become: true
+
+  vars:
+    services_db_apps: >-
+      {{ (['gitea'] if gitea_enabled | bool else [])
+         + (['umami'] if umami_enabled | bool else [])
+         + (['semaphore'] if semaphore_enabled | bool else []) }}
+    services_any_enabled: >-
+      {{ postgresql_enabled | bool or pgadmin_enabled | bool or gitea_enabled | bool
+         or umami_enabled | bool or semaphore_enabled | bool or memos_enabled | bool
+         or ntfy_enabled | bool }}
+
+  handlers:
+    - name: Import handlers
+      ansible.builtin.import_tasks: ../handlers/main.yml
+
+  tasks:
+    - name: Check that Docker is turned on
+      ansible.builtin.assert:
+        that: docker_enabled | bool
+        fail_msg: The services run in Docker. Set docker_enabled true and run playbooks/docker.yml first.
+        quiet: true
+      when: services_any_enabled | bool
+
+    - name: Check that PostgreSQL is turned on for the apps that need it
+      ansible.builtin.assert:
+        that: postgresql_enabled | bool
+        fail_msg: "{{ services_db_apps | join(', ') }} store data in PostgreSQL. Set postgresql_enabled: true."
+        quiet: true
+      when: (services_db_apps | length > 0) or (pgadmin_enabled | bool)
+
+    - name: Set up PostgreSQL
+      ansible.builtin.import_tasks: ../services/postgresql.yml
+      when: postgresql_enabled | bool
+
+    - name: Set up pgAdmin
+      ansible.builtin.import_tasks: ../services/pgadmin.yml
+      when: pgadmin_enabled | bool
+
+    - name: Set up Gitea
+      ansible.builtin.import_tasks: ../services/gitea.yml
+      when: gitea_enabled | bool
+
+    - name: Set up Umami
+      ansible.builtin.import_tasks: ../services/umami.yml
+      when: umami_enabled | bool
+
+    - name: Set up Semaphore UI
+      ansible.builtin.import_tasks: ../services/semaphore.yml
+      when: semaphore_enabled | bool
+
+    - name: Set up Memos
+      ansible.builtin.import_tasks: ../services/memos.yml
+      when: memos_enabled | bool
+
+    - name: Set up ntfy
+      ansible.builtin.import_tasks: ../services/ntfy.yml
+      when: ntfy_enabled | bool
+
+    - name: Update the Caddy sites for the services
+      ansible.builtin.import_tasks: ../tasks/caddyfile.yml
+      when: caddy_enabled | bool
