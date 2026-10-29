@@ -1,0 +1,288 @@
+---
+# Read-only checks of the real server state. Nothing is changed.
+# Run: ansible-playbook playbooks/verify.yml
+# Every check prints a message that says what is wrong when it fails.
+
+- name: Verify the server
+  hosts: all
+  become: true
+
+  vars:
+    # Public TCP ports that may be open besides SSH (and 80/443 with Caddy).
+    verify_allowed_public_tcp_ports: "{{ firewall_allowed_tcp_ports }}"
+    verify_expected_public_tcp_ports: >-
+      {{ ([ssh_port | int]
+          + (verify_allowed_public_tcp_ports | map('int') | list)
+          + ([80, 443] if caddy_enabled | bool else [])) | unique | sort }}
+    verify_units_base:
+      - ssh.socket
+      - ufw.service
+      - unattended-upgrades.service
+      - apt-daily.timer
+      - apt-daily-upgrade.timer
+    verify_units: >-
+      {{ verify_units_base
+         + (['fail2ban.service'] if fail2ban_enabled | bool else [])
+         + (['containerd.service', 'docker.service'] if docker_enabled | bool else [])
+         + (['caddy.service'] if caddy_enabled | bool else []) }}
+
+  tasks:
+    # --- System ---------------------------------------------------------------
+    - name: Check the Ubuntu release
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.distribution == 'Ubuntu'
+          - ansible_facts.distribution_version in supported_ubuntu_versions
+        fail_msg: "Unsupported OS: {{ ansible_facts.distribution }} {{ ansible_facts.distribution_version }}."
+        quiet: true
+
+    - name: Read time sync status
+      ansible.builtin.command: timedatectl show -p NTP --value
+      changed_when: false
+      register: verify_ntp
+
+    - name: Check that time sync is turned on
+      ansible.builtin.assert:
+        that: verify_ntp.stdout == 'yes'
+        fail_msg: "Network time sync is off. Check systemd-timesyncd (24.04) or chrony (26.04)."
+        quiet: true
+
+    - name: Read the state of required systemd units
+      # With only a name, this module reads the unit state and changes nothing.
+      ansible.builtin.systemd_service:
+        name: "{{ item }}"
+      register: verify_units_state
+      loop: "{{ verify_units }}"
+
+    - name: Check that required units are enabled at boot and active
+      ansible.builtin.assert:
+        that:
+          - item.status.UnitFileState == 'enabled'
+          - item.status.ActiveState == 'active'
+        fail_msg: >-
+          {{ item.item }} is '{{ item.status.UnitFileState }}' and '{{ item.status.ActiveState }}',
+          expected 'enabled' and 'active'. See: journalctl -u {{ item.item }}
+        quiet: true
+      loop: "{{ verify_units_state.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    # --- Automatic security updates -------------------------------------------
+    - name: Read the effective apt periodic settings
+      ansible.builtin.command: apt-config dump APT::Periodic
+      changed_when: false
+      register: verify_apt_periodic
+
+    - name: Read the automatic reboot setting
+      ansible.builtin.command: apt-config dump Unattended-Upgrade::Automatic-Reboot
+      changed_when: false
+      register: verify_auto_reboot
+
+    - name: Check that unattended security upgrades run daily without rebooting
+      ansible.builtin.assert:
+        that:
+          - "'APT::Periodic::Update-Package-Lists \"1\";' in verify_apt_periodic.stdout_lines"
+          - "'APT::Periodic::Unattended-Upgrade \"1\";' in verify_apt_periodic.stdout_lines"
+          - "'true' not in verify_auto_reboot.stdout"
+        fail_msg: >-
+          Automatic updates are not set up as expected. apt-config shows:
+          {{ verify_apt_periodic.stdout_lines }} {{ verify_auto_reboot.stdout_lines }}
+        quiet: true
+
+    # --- Admin user -----------------------------------------------------------
+    - name: Read the admin user's groups
+      ansible.builtin.command: id -nG {{ admin_user }}
+      changed_when: false
+      register: verify_admin_groups
+
+    - name: Check that the admin user is in the sudo group
+      ansible.builtin.assert:
+        that: "'sudo' in verify_admin_groups.stdout.split()"
+        fail_msg: "{{ admin_user }} is not in the sudo group (groups: {{ verify_admin_groups.stdout }})."
+        quiet: true
+
+    - name: Read the admin user's password field
+      ansible.builtin.getent:
+        database: shadow
+        key: "{{ admin_user }}"
+      no_log: true
+
+    - name: Check that the admin user has a password for sudo
+      ansible.builtin.assert:
+        that: ansible_facts.getent_shadow[admin_user][0] is match('^\$')
+        fail_msg: "{{ admin_user }} has no password, so sudo cannot work. Set vault_admin_password_hash."
+        quiet: true
+      no_log: true
+      when: not admin_sudo_nopasswd | bool
+
+    - name: Read the admin user's SSH files
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: verify_admin_ssh_files
+      loop:
+        - "~{{ admin_user }}/.ssh"
+        - "~{{ admin_user }}/.ssh/authorized_keys"
+
+    - name: Check owner and permissions of the admin user's SSH files
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+          - item.stat.pw_name == admin_user
+          - item.stat.mode in ['0700', '0600']
+        fail_msg: >-
+          {{ item.item }} must exist, belong to {{ admin_user }} and not be readable
+          by others (mode 0700 for .ssh, 0600 for authorized_keys).
+        quiet: true
+      loop: "{{ verify_admin_ssh_files.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Check that the admin user can log in with an SSH key
+      ansible.builtin.command: id -un
+      become: false
+      vars:
+        ansible_user: "{{ admin_user }}"
+        ansible_ssh_extra_args: "-o PreferredAuthentications=publickey"
+      changed_when: false
+
+    # --- SSH server -----------------------------------------------------------
+    - name: Read the SSH hardening drop-in file
+      ansible.builtin.stat:
+        path: /etc/ssh/sshd_config.d/00-hardening.conf
+      register: verify_sshd_dropin
+
+    - name: Check the SSH hardening drop-in file
+      ansible.builtin.assert:
+        that:
+          - verify_sshd_dropin.stat.exists
+          - verify_sshd_dropin.stat.pw_name == 'root'
+          - verify_sshd_dropin.stat.mode == '0644'
+        fail_msg: "/etc/ssh/sshd_config.d/00-hardening.conf is missing or has the wrong owner or mode."
+        quiet: true
+
+    - name: Read the effective sshd settings
+      ansible.builtin.command: /usr/sbin/sshd -T
+      changed_when: false
+      register: verify_sshd
+
+    - name: Check the effective sshd settings
+      ansible.builtin.assert:
+        that: item in verify_sshd.stdout_lines
+        fail_msg: "sshd -T does not show '{{ item }}'. Another sshd_config.d file may override it."
+        quiet: true
+      loop:
+        - "port {{ ssh_port }}"
+        - permitrootlogin no
+        - passwordauthentication no
+        - kbdinteractiveauthentication no
+        - pubkeyauthentication yes
+        - x11forwarding no
+
+    # --- Firewall and listening ports -----------------------------------------
+    - name: Read the firewall status
+      ansible.builtin.command: ufw status verbose
+      changed_when: false
+      register: verify_ufw
+
+    - name: Check the firewall defaults
+      ansible.builtin.assert:
+        that:
+          - "'Status: active' in verify_ufw.stdout"
+          - "'deny (incoming)' in verify_ufw.stdout"
+          - "'allow (outgoing)' in verify_ufw.stdout"
+        fail_msg: "UFW must be active with 'deny (incoming)' and 'allow (outgoing)'. Got: {{ verify_ufw.stdout_lines }}"
+        quiet: true
+
+    - name: Check that each expected port is allowed for IPv4 and IPv6
+      ansible.builtin.assert:
+        that:
+          - verify_ufw.stdout is search('(?m)^' ~ item ~ '/tcp +ALLOW IN +Anywhere( |$)')
+          - verify_ufw.stdout is search('(?m)^' ~ item ~ '/tcp \(v6\) +ALLOW IN +Anywhere \(v6\)')
+        fail_msg: "UFW has no IPv4 and IPv6 allow rule for {{ item }}/tcp."
+        quiet: true
+      loop: "{{ verify_expected_public_tcp_ports }}"
+
+    - name: Read listening TCP sockets
+      ansible.builtin.command: ss -Htln
+      changed_when: false
+      register: verify_ss
+
+    - name: Find ports that listen on a public address
+      ansible.builtin.set_fact:
+        verify_public_tcp_ports: >-
+          {{ verify_ss.stdout_lines
+             | map('regex_replace', '^\S+\s+\S+\s+\S+\s+(\S+)\s.*$', '\1')
+             | reject('match', '^(127\.|\[::1\]|\[::ffff:127\.)')
+             | reject('search', '%lo:')
+             | map('regex_replace', '^.*:', '')
+             | map('int') | unique | sort }}
+
+    - name: Check that only expected ports listen on public addresses
+      ansible.builtin.assert:
+        that: verify_public_tcp_ports | difference(verify_expected_public_tcp_ports) | length == 0
+        fail_msg: >-
+          Unexpected public listeners on TCP ports
+          {{ verify_public_tcp_ports | difference(verify_expected_public_tcp_ports) }}.
+          Docker-published ports bypass UFW. Publish them as 127.0.0.1:PORT:PORT.
+          See: sudo ss -tlnp
+        quiet: true
+
+    # --- fail2ban -------------------------------------------------------------
+    - name: Read the fail2ban sshd jail
+      ansible.builtin.command: fail2ban-client status sshd
+      changed_when: false
+      failed_when: false
+      register: verify_fail2ban
+      when: fail2ban_enabled | bool
+
+    - name: Check that the fail2ban sshd jail is running
+      ansible.builtin.assert:
+        that: verify_fail2ban.rc == 0
+        fail_msg: "The fail2ban sshd jail is not running: {{ verify_fail2ban.stderr | default('') }}"
+        quiet: true
+      when: fail2ban_enabled | bool
+
+    # --- Docker ---------------------------------------------------------------
+    - name: Read the Docker daemon config
+      ansible.builtin.slurp:
+        src: /etc/docker/daemon.json
+      register: verify_docker_daemon
+      when: docker_enabled | bool
+
+    - name: Check the default publish address in the Docker config
+      ansible.builtin.assert:
+        that: (verify_docker_daemon.content | b64decode | from_json).ip == docker_default_bind_ip
+        fail_msg: "/etc/docker/daemon.json must set \"ip\": \"{{ docker_default_bind_ip }}\"."
+        quiet: true
+      when: docker_enabled | bool
+
+    - name: Read docker group members
+      ansible.builtin.getent:
+        database: group
+        key: docker
+      when: docker_enabled | bool
+
+    - name: Check that only docker_users are in the docker group
+      ansible.builtin.assert:
+        that: >-
+          (ansible_facts.getent_group.docker[2] | split(',') | select | sort)
+          == (docker_users | sort)
+        fail_msg: >-
+          docker group members are '{{ ansible_facts.getent_group.docker[2] }}',
+          expected {{ docker_users }}. Members of the docker group have root access.
+        quiet: true
+      when: docker_enabled | bool
+
+    - name: Check that the Docker daemon answers
+      ansible.builtin.command: docker info --format '{{ "{{" }} .ServerVersion {{ "}}" }}'
+      changed_when: false
+      when: docker_enabled | bool
+
+    # --- Caddy ----------------------------------------------------------------
+    - name: Check that Caddy serves the site on this server
+      ansible.builtin.uri:
+        url: http://127.0.0.1/
+        status_code: 200
+      when:
+        - caddy_enabled | bool
+        - caddy_site_address is match(':')
