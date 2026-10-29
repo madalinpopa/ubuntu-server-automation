@@ -37,12 +37,17 @@
     state: present
   register: caddy_repo
 
+- name: Read the installed packages
+  ansible.builtin.package_facts:
+    manager: apt
+
 - name: Install Caddy
   ansible.builtin.apt:
     name: caddy
     state: present
-    # Refresh the package index only when the repository was just added.
-    update_cache: "{{ caddy_repo is changed }}"
+    # Refresh the package index when the repository was just added, or when
+    # Caddy is not installed yet (for example after a failed first run).
+    update_cache: "{{ caddy_repo is changed or 'caddy' not in ansible_facts.packages }}"
 
 - name: Create the web root directory
   ansible.builtin.file:

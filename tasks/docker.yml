@@ -58,6 +58,10 @@
     state: present
   register: docker_repo
 
+- name: Read the installed packages
+  ansible.builtin.package_facts:
+    manager: apt
+
 - name: Install Docker Engine and plugins
   ansible.builtin.apt:
     name:
@@ -67,8 +71,9 @@
       - docker-buildx-plugin
       - docker-compose-plugin
     state: present
-    # Refresh the package index only when the repository was just added.
-    update_cache: "{{ docker_repo is changed }}"
+    # Refresh the package index when the repository was just added, or when
+    # Docker is not installed yet (for example after a failed first run).
+    update_cache: "{{ docker_repo is changed or 'docker-ce' not in ansible_facts.packages }}"
 
 - name: Create the Docker config directory
   ansible.builtin.file:
