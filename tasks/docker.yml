@@ -1,63 +1,104 @@
 ---
-- name: Add Docker GPG apt Key
-  vars:
-    keyrings: /etc/apt/keyrings
-    apt_repo: https://download.docker.com/linux/ubuntu
-  block:
-    - name: Create /etc/apt/keyrings directory
-      ansible.builtin.file:
-        path: "{{ keyrings }}"
-        state: directory
-        mode: '0755'
+# Docker Engine from Docker's official apt repository.
+# Source: https://docs.docker.com/engine/install/ubuntu/
+#
+# Two security notes:
+# - Ports published with "docker run -p" or compose "ports:" bypass UFW.
+#   daemon.json sets the default publish address to docker_default_bind_ip
+#   (127.0.0.1), so "-p 8080:80" stays private. This default covers the
+#   default bridge network only. On your own networks always write
+#   "127.0.0.1:8080:80". Put Caddy in front for public access.
+# - Members of the docker group are root on this server in practice.
+#   docker_users is empty by default. Use "sudo docker" instead.
 
-    - name: Download docker gpg key
-      ansible.builtin.get_url:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        dest: "{{ keyrings }}/docker.asc"
+- name: Remove distribution Docker packages that conflict with Docker CE
+  ansible.builtin.apt:
+    name:
+      - docker.io
+      - docker-compose
+      - docker-compose-v2
+      - docker-doc
+      - podman-docker
+      - containerd
+      - runc
+    state: absent
 
-    - name: Add docker apt repository
-      ansible.builtin.apt_repository:
-        repo: "deb [arch=amd64 signed-by={{ keyrings }}/docker.asc] {{ apt_repo }} {{ ansible_distribution_release }} stable"
-        filename: docker
-        state: present
+- name: Remove the old one-line Docker repository file
+  # Older versions of this project wrote it. docker.sources replaces it.
+  ansible.builtin.file:
+    path: /etc/apt/sources.list.d/docker.list
+    state: absent
 
-- name: Install the latest version of Docker engine
-  block:
-    - name: Install docker package
-      ansible.builtin.package:
-        name:
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
-          - docker-buildx-plugin
-          - docker-compose-plugin
-        state: present
+- name: Create the apt keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
 
-    - name: Create docker group
-      ansible.builtin.group:
-        name: docker
-        state: present
+- name: Download Docker's apt signing key
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    owner: root
+    group: root
+    mode: "0644"
 
-    - name: Add VPS user to docker group
-      ansible.builtin.user:
-        name: "{{ username }}"
-        groups:
-          - docker
-        append: yes
-        state: present
+- name: Add Docker's apt repository
+  ansible.builtin.deb822_repository:
+    name: docker
+    types: deb
+    uris: https://download.docker.com/linux/ubuntu
+    suites: "{{ ansible_facts.distribution_release }}"
+    components: stable
+    # Debian names for the CPU type: amd64 or arm64.
+    architectures: "{{ {'x86_64': 'amd64', 'aarch64': 'arm64'}[ansible_facts.architecture] }}"
+    signed_by: /etc/apt/keyrings/docker.asc
+    state: present
+  register: docker_repo
 
-    - name: Enable docker service
-      ansible.builtin.service:
-        name: docker.service
-        enabled: yes
+- name: Install Docker Engine and plugins
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    # Refresh the package index only when the repository was just added.
+    update_cache: "{{ docker_repo is changed }}"
 
-    - name: Enable containerd service
-      ansible.builtin.service:
-        name: containerd.service
-        enabled: yes
+- name: Create the Docker config directory
+  ansible.builtin.file:
+    path: /etc/docker
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
 
-    - name: Copy daemon.json
-      ansible.builtin.copy:
-        dest: "/etc/docker/daemon.json"
-        src: "daemon.json"
-      notify: restart_docker
+- name: Write the Docker daemon config
+  ansible.builtin.template:
+    src: docker_daemon.json.j2
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart docker
+
+- name: Start Docker and containerd and enable them at boot
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - containerd.service
+    - docker.service
+
+- name: Add users to the docker group
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: docker
+    append: true
+  loop: "{{ docker_users }}"

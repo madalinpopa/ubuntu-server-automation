@@ -1,0 +1,16 @@
+---
+# Optional: Docker Engine. Runs only when docker_enabled is true.
+# Run: ansible-playbook playbooks/docker.yml
+
+- name: Docker Engine
+  hosts: all
+  become: true
+
+  handlers:
+    - name: Import handlers
+      ansible.builtin.import_tasks: ../handlers/main.yml
+
+  tasks:
+    - name: Install and configure Docker
+      ansible.builtin.import_tasks: ../tasks/docker.yml
+      when: docker_enabled | bool
